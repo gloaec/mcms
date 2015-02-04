@@ -31,45 +31,91 @@
     </head>
     <body>
 
-        <nav class="navbar navbar-default navbar-fixed-top momo-navbar">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <a class="navbar-brand" href="#home">
-                        <span class="momo-icon"><i class="fa fa-spinner fa-pulse"></i></span>
-                        <span class="momo-title">Loading...</span>
-                    </a>
-                </div>
+        <div id="momo-main"></div>
+
+        <!-- Main Template -->
+        <script type="text/x-tmpl" id="momo-main-tmpl">
+
+            <div class="momo-page-wrapper">
+
+                <!-- Navbar -->
+                <nav class="navbar navbar-default navbar-fixed-top momo-navbar">
+                    <div class="container-fluid">
+                        <div class="navbar-header">
+                            <a class="navbar-brand" href="#home">
+                                <span class="momo-icon">
+                                    <img src="{%= o.meta.icon %}" width="20" height="20"/>
+                                </span>
+                                <span class="momo-title">{%= o.meta.title %}</span>
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Pages List -->
+                <div id="momo-pages"></div>
+
             </div>
-        </nav>
+  
+            <!-- Footer -->
+            <footer class="momo-footer">
+                <div class="container-fluid clearfix">
+                    <p class="navbar-text pull-right">
+                        <a href="mailto:{%= o.contact %}" class="momo-contact">{%= o.meta.contact %}</a>
+                    </p>
+                </div>
+            </footer>
 
-        <div class="container-fluid momo-container">
+        </script>
 
-            <nav class="navbar navbar-inverse navbar-static-top row momo-subnavbar">
+        <!-- Page Template -->
+        <script type="text/x-tmpl" id="momo-page-tmpl">
+        
+            <nav class="navbar navbar-inverse navbar-static-top momo-subnavbar">
                 <div class="container-fluid">
                     <div class="navbar-header">
-                        <span class="navbar-brand momo-page-title">
+                        <span class="navbar-brand">
+                            {%= o.title %}
                         </span>
                     </div>
                 </div>
-            </nav>
+            </nav> 
 
-            <!--h3 class="page-header momo-page-title"></h3-->
+            <div class="container-fluid">
+                <section class="momo-page-content">{%# o.content %}</section>
+            </div>
 
-            <div class="momo-page-content">
-                <div class="jumbotron text-center">
-                    <i class="fa fa-spinner fa-pulse fa-2x"></i>
+            {% if(o.url){ %}
+                <iframe src="{%= o.url %}"></iframe>
+            {% } %}
+       
+            {% if(o.pages){ %}
+                <div class="list-group momo-page-pages">
+                    {% for (var i = 0; i < o.pages.length; i++) { %}
+                        <a href="#{%= o.pages[i] %}" class="list-group-item">{%= app.pages[o.pages[i]].title %}</a>
+                    {% } %}
                 </div>
-            </div>
+            {% } %}
 
-            <div class="row list-group momo-page-pages"></div>
+            {% if(o.seealso){ %}
+                <div class="container-fluid">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            See Also
+                        </div>
+                        <div class="list-group momo-page-pages">
+                            {% for (var i = 0; i < o.seealso.length; i++) { %}
+                                <a href="#{%= o.seealso[i] %}" class="list-group-item">{%= app.pages[o.seealso[i]].title %}</a>
+                            {% } %}
+                        </div>
+                    </div>
+                </div>
+            {% } %}
 
-            <div class="panel panel-default">
-              <div class="panel-heading">See also</div>
-              <div class="list-group momo-page-seealso"></div>
-            </div>
+        </script>
 
-        </div>
         <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/tmpl.min.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript">
             app.initialize();
