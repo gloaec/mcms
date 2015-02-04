@@ -1,0 +1,72 @@
+{"meta": {
+   "title": "Ma ville au quotidien",
+   "icon": "icon.png",
+   "contact": "info@example.net",
+   "updateFreq": 86400,
+   "updateUrl": "https://perso.entrouvert.org/~fred/ma-ville.json",
+   "assetsUrl": "https://perso.entrouvert.org/~fred/ma-ville-assets.zip?1416471664"
+ },
+ "title": "Ma ville",
+ "content": "<p>Bienvenue !</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>",
+ "pages": [
+    {"title": "Découvrir la ville",
+     "pages": [
+       {"title": "Office de tourisme",
+        "content": "<p>...</p>"
+       },
+       {"title": "Histoire de la ville",
+        "content": "<p>Début XXème:<br/><img src='assets/photo.jpg'/></p>..."
+       },
+       {"id": "plan-poi",
+        "title": "Plan de la ville",
+        "content": "<p>...</p>"
+       }
+     ]
+    },
+    {"title": "Culture, sports, loisirs",
+     "pages": [
+       {"title": "Bibliothèques",
+        "content": "<p>...</p>"
+       },
+       {"title": "Culture",
+        "content": "<p>...</p>"
+       },
+       {"title": "Sports",
+        "content": "<p>...</p>"
+       },
+       {"title": "Conservatoire",
+        "content": "<p>...</p>"
+       },
+       {"title": "Annuaire des associations en ligne",
+        "url": "http://www.example.net",
+        "external": true
+       }
+     ]
+    },
+    {"title": "Démocratie locale",
+     "content": "<p>C'est important.</p>",
+     "pages": [
+       {"title": "Conseil municipal",
+        "content": "<p>...</p>",
+        "seealso": ["plan-poi"]
+       },
+       {"title": "Rencontres de quartier",
+        "content": "<p>...</p>"
+       }
+     ]
+    },
+    {"title": "Démarches administratives",
+     "pages": [
+       {"title": "Démarches en mairie",
+        "content": "<p>...</p>",
+        "seealso": ["plan-poi", "demarches-en-ligne"]
+       },
+       {
+        "id": "demarches-en-ligne",
+        "title": "Démarches en ligne",
+        "url": "https://example.net"
+       }
+     ]
+    }
+ ]
+}
