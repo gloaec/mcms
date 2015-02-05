@@ -19,7 +19,7 @@
        },
        {"id": "plan-poi",
         "title": "Plan de la ville",
-        "content": "<p>...</p>"
+        "content": "<iframe width='425' height='350' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='http://www.openstreetmap.org/export/embed.html?bbox=5.000066757202148%2C47.30333063750183%2C5.065813064575195%2C47.339288006029356&amp;layer=mapnik' style='border: 1px solid black'></iframe><br/><small><a href='http://www.openstreetmap.org/#map=14/47.3213/5.0329'>View Larger Map</a></small>"
        }
      ]
     },

@@ -138,40 +138,34 @@ var app = {
         document.getElementById('momo-main').innerHTML = $main;
 
         // Render every page
-        for(var page in app.pages)
-            app.renderPage(app.pages[page]);
+        for(var page in app.pages){
+            //app.renderPage(app.pages[page]);
+            var $page = document.createElement('div');
+            $page.id = app.pages[page].id;
+            $page.className = "momo-page";
+            if($page.id == 'home'){
+                $page.classList.add('momo-page-current');
+                $page.innerHTML = app.renderPage(app.pages[page]);
+            }
+            document.getElementById('momo-pages').appendChild($page);
+        }
     },
 
     // Render Page
     renderPage: function(page){
-
         if(page instanceof Object){
-
-            var $page = document.createElement('div');
-            $page.id = page.id;
-            $page.className = "momo-page";
-            if(page.id == 'home'){
-                $page.classList.add('momo-page-current');
-            }
-            $page.innerHTML = tmpl("momo-page-tmpl", page);
-            document.getElementById('momo-pages').appendChild($page);
-
+            return tmpl("momo-page-tmpl", page);
         } else
         if(typeof page === 'string' || page instanceof String || page instanceof Number){
-            //console.log('Render page '+page);
-            //window.location.hash = page;
-            //if(app.pages.hasOwnProperty(page)) {
-            //    app.renderPage(app.pages[page]);
-            //} else {
-            //    alert('Page "'+page+'" doesn\'t exist');
-            //}
+            return app.renderPage(app.pages[page]);
         }
     },
 
     navigate: function(page, back){
 
         var page_obj = app.pages[page];
-
+        console.log('navigate');
+        console.log(app.renderPage(app.pages[page]));
         if(page_obj.external){
             navigator.app.loadUrl(page_obj.url, { openExternal:true });
             return false;
@@ -220,6 +214,7 @@ var app = {
         $outpage.addEventListener('MSAnimationEnd',     outCb, false);
 
         $inpage.classList.add('momo-page-current');
+        $inpage.innerHTML = app.renderPage(page_obj);
 
         var in_classes = (back ? ANIMATION_BACK_IN_CLASS : ANIMATION_IN_CLASS).split(' ');
         for(var i = 0; i < in_classes.length; i++)
