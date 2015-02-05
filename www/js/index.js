@@ -19,6 +19,8 @@
 
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
 var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
+var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
+var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
 
 var extend = function ( defaults, options ) {
     var extended = {};
@@ -45,10 +47,12 @@ var app = {
         'contact': 'contact@cadoles.com'
     },
 
-    current    : 0,
-    isAnimating: false,
-    endCurrPage: false,
-    endNextPage: false,
+    current       : 0,
+    isAnimating   : false,
+    endCurrPage   : false,
+    endNextPage   : false,
+    hashHistory   : [window.location.hash],
+    historyLength : window.history.length,
 
     // Application Constructor
     initialize: function() {
@@ -152,31 +156,6 @@ var app = {
             $page.innerHTML = tmpl("momo-page-tmpl", page);
             document.getElementById('momo-pages').appendChild($page);
 
-            //if(page.external){
-            //    navigator.app.loadUrl(page.url, { openExternal:true });
-            //    return false;
-            //}
-
-            //app.utils.updateEl('.momo-page-content', '');
-            //app.utils.updateEl('.momo-page-pages', '');
-            //app.utils.updateEl('.momo-page-seealso', '');
-            //app.utils.updateEl('.momo-page-title', page.title);
-            //var $seealso = document.querySelector('.momo-page-seealso');
-            //$seealso.parentElement.style.display = 'none';
-
-            //if(page.content){
-            //    app.utils.updateEl('.momo-page-content', page.content);
-            //} else
-            //if(page.url){
-            //    app.utils.updateEl('.momo-page-content', '<div class="momo-container"><iframe src="'+page.url+'"></iframe></div>');
-            //}          
-            //if(page.pages instanceof Array){
-            //    app.utils.updateEl('.momo-page-pages', app.utils.renderLinks(page.pages));
-            //}
-            //if(page.seealso instanceof Array){
-            //    $seealso.parentElement.style.display = 'block';
-            //    app.utils.updateEl('.momo-page-seealso', app.utils.renderLinks(page.seealso));
-            //}
         } else
         if(typeof page === 'string' || page instanceof String || page instanceof Number){
             //console.log('Render page '+page);
@@ -189,54 +168,79 @@ var app = {
         }
     },
 
-    navigate: function(page){
+    navigate: function(page, back){
+
+        var page_obj = app.pages[page];
+
+        if(page_obj.external){
+            navigator.app.loadUrl(page_obj.url, { openExternal:true });
+            return false;
+        }
 
         if(app.isAnimating) {
             return false;
         }
+
         app.isAnimating = true;
 
         var $outpage = document.getElementById(app.current_page);
         var $inpage  = document.getElementById(page);
 
+        //$inpage.classList.add('momo-page-current');
+        //$outpage.classList.remove('momo-page-current');
+
         var outCb = function(){
-            $outpage.removeEventListener('animationend', outCb);
+            $outpage.removeEventListener('animationend',       outCb);
+            $outpage.removeEventListener('webkitAnimationEnd', outCb);
+            $outpage.removeEventListener('oAnimationEnd',      outCb);
+            $outpage.removeEventListener('MSAnimationEnd',     outCb);
             app.endCurrPage = true;
             if(app.endNextPage){
-                app.onAnimationEnd($outpage, $inpage);
+                app.onAnimationEnd($outpage, $inpage, back);
             }
         };
 
         var inCb = function(){
-            $inpage.removeEventListener('animationend', inCb);
+            $inpage.removeEventListener('animationend',       inCb);
+            $inpage.removeEventListener('webkitAnimationEnd', inCb);
+            $inpage.removeEventListener('oAnimationEnd',      inCb);
+            $inpage.removeEventListener('MSAnimationEnd',     inCb);
             app.endNextPage = true;
             if(app.endCurrPage){
-                app.onAnimationEnd($outpage, $inpage);
+                app.onAnimationEnd($outpage, $inpage, back);
             }
         };
-        var out_classes = ANIMATION_OUT_CLASS.split(' ');
+
+        var out_classes = (back ? ANIMATION_BACK_OUT_CLASS : ANIMATION_OUT_CLASS).split(' ');
         for(var i = 0; i < out_classes.length; i++)
             $outpage.classList.add(out_classes[i]);
-        $outpage.addEventListener('animationend', outCb, false);
+        $outpage.addEventListener('animationend',       outCb, false);
+        $outpage.addEventListener('webkitAnimationEnd', outCb, false);
+        $outpage.addEventListener('oAnimationEnd',      outCb, false);
+        $outpage.addEventListener('MSAnimationEnd',     outCb, false);
 
         $inpage.classList.add('momo-page-current');
-        var in_classes = ANIMATION_IN_CLASS.split(' ');
+
+        var in_classes = (back ? ANIMATION_BACK_IN_CLASS : ANIMATION_IN_CLASS).split(' ');
         for(var i = 0; i < in_classes.length; i++)
             $inpage.classList.add(in_classes[i]);
-        $inpage.addEventListener('animationend', inCb);
+        $inpage.addEventListener('animationend',       inCb, false);
+        $inpage.addEventListener('webkitAnimationEnd', inCb, false);
+        $inpage.addEventListener('oAnimationEnd',      inCb, false);
+        $inpage.addEventListener('MSAnimationEnd',     inCb, false);
 
         app.current_page = page;
     },
 
-    onAnimationEnd($outpage, $inpage) {
+    onAnimationEnd: function($outpage, $inpage, back) {
         app.endCurrPage = false;
         app.endNextPage = false;
-        var out_classes = ANIMATION_OUT_CLASS.split(' ');
+        var out_classes = (back ? ANIMATION_BACK_OUT_CLASS : ANIMATION_OUT_CLASS).split(' ');
         for(var i = 0; i < out_classes.length; i++)
             $outpage.classList.remove(out_classes[i]);
-        if( $outpage != $inpage)
-        $outpage.classList.remove('momo-page-current');
-        var in_classes = ANIMATION_IN_CLASS.split(' ');
+        if($outpage != $inpage)
+            $outpage.classList.remove('momo-page-current');
+        var in_classes = (back ? ANIMATION_BACK_IN_CLASS : ANIMATION_IN_CLASS).split(' ');
         for(var i = 0; i < in_classes.length; i++)
             $inpage.classList.remove(in_classes[i]);
         app.isAnimating = false;
@@ -247,13 +251,31 @@ var app = {
         window.addEventListener('hashchange', this.onHashChange, false);
     },
 
+     
     onHashChange: function(e) {
+        var back = false;
+        var hash = window.location.hash, length = window.history.length;
         var page = window.location.hash.slice(1);
+
+        if (app.hashHistory.length && app.historyLength == length) {
+            if (app.hashHistory[app.hashHistory.length - 2] == hash) {
+                app.hashHistory = app.hashHistory.slice(0, -1);
+                back = true; 
+            } else {
+                app.hashHistory.push(hash);
+            }
+        } else {
+            app.hashHistory.push(hash);
+            app.historyLength = length;
+        }
+
         if(!app.pages.hasOwnProperty(page)){
             page = 'home';
         } 
-        if(app.current_page != page)
-            app.navigate(page);
+
+        if(app.current_page != page){
+            app.navigate(page, back);
+        }
     },
 
     onDeviceReady: function() {
