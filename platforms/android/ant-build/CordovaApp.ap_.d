@@ -1,7 +1,6 @@
 /home/ghis/Workspace/momo/platforms/android/ant-build/CordovaApp.ap_ \
  : /home/ghis/Workspace/momo/platforms/android/res/drawable-port-mdpi/screen.png \
 /home/ghis/Workspace/momo/platforms/android/res/drawable-hdpi/icon.png \
-/home/ghis/Workspace/momo/platforms/android/res/drawable-hdpi/drawable-mdpi \
 /home/ghis/Workspace/momo/platforms/android/res/drawable-land-ldpi/screen.png \
 /home/ghis/Workspace/momo/platforms/android/res/drawable-port-xhdpi/screen.png \
 /home/ghis/Workspace/momo/platforms/android/res/drawable-land-mdpi/screen.png \
@@ -38,13 +37,16 @@
 /home/ghis/Workspace/momo/platforms/android/assets/www/spec.html \
 /home/ghis/Workspace/momo/platforms/android/assets/www/res \
 /home/ghis/Workspace/momo/platforms/android/assets/www/fonts \
+/home/ghis/Workspace/momo/platforms/android/assets/www/js/tmpl.min.js \
 /home/ghis/Workspace/momo/platforms/android/assets/www/js/bootstrap.min.js \
 /home/ghis/Workspace/momo/platforms/android/assets/www/js/index.js \
+/home/ghis/Workspace/momo/platforms/android/assets/www/js/pagetransitions.js \
 /home/ghis/Workspace/momo/platforms/android/assets/www/img/logo.png \
 /home/ghis/Workspace/momo/platforms/android/assets/www/css/bootstrap.min.css \
 /home/ghis/Workspace/momo/platforms/android/assets/www/css/index.css \
 /home/ghis/Workspace/momo/platforms/android/assets/www/css/bootstrap-theme.min.css \
 /home/ghis/Workspace/momo/platforms/android/assets/www/css/font-awesome.min.css \
+/home/ghis/Workspace/momo/platforms/android/assets/www/css/animations.css \
 /home/ghis/Workspace/momo/platforms/android/assets/www/spec/lib \
 /home/ghis/Workspace/momo/platforms/android/assets/www/spec/helper.js \
 /home/ghis/Workspace/momo/platforms/android/assets/www/spec/index.js \
