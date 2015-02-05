@@ -87,7 +87,6 @@ var app = {
         app.current_page = data.id;
         app.registerPage(data);
         app.render(data);
-        //app.navigate(data.id);
     },
 
     // Recursive function to index page form json

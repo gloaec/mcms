@@ -27,14 +27,26 @@
 }
 
 html, body,
-#momo-body,
-.momo-page {
+#momo-main,
+.momo-page,
+.momo-loading {
     height: 100%;
     width: 100%;
 }
 
+#momo-main {
+    display: table;
+}
+
+.momo-loading {
+    display: table-cell;
+    vertical-align: middle; 
+    text-align: center;
+    padding-bottom: 60px;
+}
+
 .momo-page {
-    background: url("http://subtlepatterns.com/patterns/greyzz.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
+    background: url("../img/greyzz.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
     box-shadow: 0 0 20px #000;
 }
 
@@ -42,12 +54,12 @@ body {
     -webkit-touch-callout: none;                /* prevent callout to copy image, etc when tap to hold */
     -webkit-text-size-adjust: none;             /* prevent webkit from resizing text to fit */
     -webkit-user-select: none;                  /* prevent copy paste, to allow, change 'none' to 'text' */
-    font-size:12px;
+    font-size:14px;
     margin:0px;
     padding:0px;
     padding-top: 60px;
     width:100%;
-    background: url("http://subtlepatterns.com/patterns/greyzz.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
+    background: url("../img/greyzz.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
 }
 
 /* Portrait layout (default) */
