@@ -107,7 +107,14 @@
             {% if(o.pages){ %}
                 <div class="list-group momo-page-pages">
                     {% for (var i = 0; i < o.pages.length; i++) { %}
-                        <a href="#{%= o.pages[i] %}" class="list-group-item">{%= app.pages[o.pages[i]].title %}</a>
+                        <a href="#{%= o.pages[i] %}" class="list-group-item">
+                            {%= app.pages[o.pages[i]].title %}
+                            {% if(app.pages[o.pages[i]].external) { %}
+                                <i class="fa fa-external-link pull-right"></i>
+                            {% } else { %}
+                                <i class="fa fa-angle-right pull-right"></i>
+                            {% } %}
+                        </a>
                     {% } %}
                 </div>
             {% } %}
@@ -120,7 +127,14 @@
                         </div>
                         <div class="list-group momo-page-pages">
                             {% for (var i = 0; i < o.seealso.length; i++) { %}
-                                <a href="#{%= o.seealso[i] %}" class="list-group-item">{%= app.pages[o.seealso[i]].title %}</a>
+                                <a href="#{%= o.seealso[i] %}" class="list-group-item">
+                                    {%= app.pages[o.seealso[i]].title %}
+                                    {% if(app.pages[o.seealso[i]].external) { %}
+                                        <i class="fa fa-external-link pull-right"></i>
+                                    {% } else { %}
+                                        <i class="fa fa-angle-right pull-right"></i>
+                                    {% } %}
+                                </a>
                             {% } %}
                         </div>
                     </div>
@@ -131,6 +145,7 @@
 
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/tmpl.min.js"></script>
+        <script type="text/javascript" src="js/fastclick.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript">
             app.initialize();

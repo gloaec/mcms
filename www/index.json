@@ -1,9 +1,9 @@
 {"meta": {
-   "title": "Ma ville au quotidien",
+   "title": "Ma ville au quotidien (Local)",
    "icon": "icon.png",
    "contact": "info@example.net",
-   "updateFreq": 86400,
-   "updateUrl": "https://perso.entrouvert.org/~fred/ma-ville.json",
+   "updateFreq": 100,
+   "updateUrl": "http://localhost/~ghis/index.json",
    "assetsUrl": "https://perso.entrouvert.org/~fred/ma-ville-assets.zip?1416471664"
  },
  "title": "Ma ville",

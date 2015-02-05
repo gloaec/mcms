@@ -17,11 +17,20 @@
  * under the License.
  */
 
+// Constants
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
 var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
 var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
 
+// FastClick Patch
+if ('addEventListener' in document) {
+    document.addEventListener('DOMContentLoaded', function() {
+        FastClick.attach(document.body);
+    }, false);
+}
+
+// Object extend method
 var extend = function ( defaults, options ) {
     var extended = {};
     var prop;
@@ -38,15 +47,18 @@ var extend = function ( defaults, options ) {
     return extended;
 };
 
+// Application
 var app = {
 
+    // Default Manifest
     pages: {},
-
     meta: {
         'title': 'Momo Application',
-        'contact': 'contact@cadoles.com'
+        'contact': 'contact@cadoles.com',
+        'updateUrl': 'index.json'
     },
 
+    // Misc
     current       : 0,
     isAnimating   : false,
     endCurrPage   : false,
@@ -57,29 +69,65 @@ var app = {
     // Application Constructor
     initialize: function() {
         this.bindEvents();
-        this.loadManifest();
+        this.loadLocalManifest();
+    },
+
+    // Application events
+    bindEvents: function() {
+        document.addEventListener('deviceready', this.onDeviceReady, false);
+        window.addEventListener('hashchange', this.onHashChange, false);
     },
     
-    // JSON Manifest loading function
-    loadManifest: function(){
-        var manifest    = localStorage.getItem("momo-manifest");
-        var manifestUrl = manifest ? manifest['updateUrl'] : 'index.json';
+    // JSON Local Manifest loading function
+    loadLocalManifest: function(){
+        var manifest    = localStorage.getItem("momo-manifest") ? JSON.parse(localStorage.getItem("momo-manifest")) : { meta: app.meta };
+        var lastUpdate  = localStorage.getItem("momo-timestamp") ? new Date(localStorage.getItem("momo-timestamp")) : new Date(0);
+        var url         = manifest.meta.updateUrl;
         var request     = new XMLHttpRequest();
-        request.open('GET', manifestUrl, true);
+        request.open('GET', url, true);
         request.onload = function() {
             if (request.status >= 200 && request.status < 400) {
-                var data = JSON.parse(request.responseText);
-                app.start(data);
+                var data     = JSON.parse(request.responseText);
+                var timeDiff = (new Date()).getTime() - lastUpdate.getTime();
+                if(timeDiff > data.meta.updateFreq){
+                    localStorage.setItem("momo-timestamp", new Date());
+                    app.loadDistantManifest(data);
+                } else {
+                    app.start(data);
+                }
             } else {
-                alert("Error "+request.status);
+                alert("Cannot load "+url+". Loading local manifest instead.");
+                app.loadDistantManifest({ meta: app.meta });
             }
         };
         request.onerror = function() {
-            alert("Connexion Error");
+            alert("Cannot load "+url+". Loading local manifest instead.");
+            app.loadDistantManifest({ meta: app.meta });
         };
         request.send();
     },
 
+    // JSON Distant Manifest loading function
+    loadDistantManifest: function(data){
+        var url         = data.meta.updateUrl;
+        var request     = new XMLHttpRequest();
+        request.open('GET', url, true);
+        request.onload = function() {
+            if (request.status >= 200 && request.status < 400) {
+                var data = JSON.parse(request.responseText);
+                localStorage.setItem("momo-manifest", JSON.stringify(data));
+                app.start(data);
+            } else {
+                alert("Cannot load "+url+". Loading local manifest instead.");
+                app.start(data);
+            }
+        };
+        request.onerror = function() {
+            alert("Cannot load "+url+". Loading local manifest instead.");
+            app.start(data);
+        };
+        request.send();
+    },
 
     // Application starter
     start: function(data){
@@ -89,7 +137,7 @@ var app = {
         app.render(data);
     },
 
-    // Recursive function to index page form json
+    // Recursive function to index page from JSON Manifest
     registerPage: function(data){
 
         if(data instanceof Object){
@@ -160,17 +208,27 @@ var app = {
         }
     },
 
+    // Navigate to page
     navigate: function(page, back){
 
         var page_obj = app.pages[page];
-        console.log('navigate');
-        console.log(app.renderPage(app.pages[page]));
+
+        if(page_obj.external && back){
+            window.history.back();
+            return false;
+        } else
         if(page_obj.external){
-            navigator.app.loadUrl(page_obj.url, { openExternal:true });
+            if(device.platform === 'Android') // Android
+                navigator.app.loadUrl(encodeURI(page_obj.url), { openExternal:true });
+            else // iOS and others
+                window.open(encodeURI(page_obj.url), "_system", 'location=yes'); // opens in the app, not in safari
             return false;
         }
 
         if(app.isAnimating) {
+            setTimeout(function(){
+                app.navigate(page, back);
+            }, 100);
             return false;
         }
 
@@ -226,6 +284,7 @@ var app = {
         app.current_page = page;
     },
 
+    // Animation Callback
     onAnimationEnd: function($outpage, $inpage, back) {
         app.endCurrPage = false;
         app.endNextPage = false;
@@ -240,15 +299,15 @@ var app = {
         app.isAnimating = false;
     },
 
-    bindEvents: function() {
-        document.addEventListener('deviceready', this.onDeviceReady, false);
-        window.addEventListener('hashchange', this.onHashChange, false);
-    },
-
-     
+    // Location Hash change event
     onHashChange: function(e) {
         var hash = window.location.hash, length = window.history.length;
         var page = window.location.hash.slice(1);
+
+        if(!app.pages.hasOwnProperty(page)){
+            page = 'home';
+        } 
+
         var back = page == 'home';
 
         if (app.hashHistory.length && app.historyLength == length) {
@@ -256,6 +315,7 @@ var app = {
                 app.hashHistory = app.hashHistory.slice(0, -1);
                 back = true; 
             } else {
+                //if(!app.pages[page].external)
                 app.hashHistory.push(hash);
             }
         } else {
@@ -263,15 +323,12 @@ var app = {
             app.historyLength = length;
         }
 
-        if(!app.pages.hasOwnProperty(page)){
-            page = 'home';
-        } 
-
         if(app.current_page != page){
             app.navigate(page, back);
         }
     },
 
+    // Device ready callback
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
     },
@@ -280,6 +337,7 @@ var app = {
         console.log('Received Event: ' + id);
     },
 
+    // Various Javascript Helpers
     utils: {
 
         updateEl: function(selector, html){
