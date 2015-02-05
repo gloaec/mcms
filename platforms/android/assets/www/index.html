@@ -73,10 +73,19 @@
         
             <nav class="navbar navbar-inverse navbar-static-top momo-subnavbar">
                 <div class="container-fluid">
-                    <div class="navbar-header">
-                        <span class="navbar-brand">
+                    <div class="row">
+                        <div class="col-xs-2 navbar-btn text-left">
+                            {% if(o.id != 'home'){ %}
+                                <a href="#" class="btn btn-success pull-left" onclick="window.history.back(); return false;">
+                                    <i class="fa fa-chevron-left"></i>
+                                </a>
+                            {% } %}
+                        </div>
+                        <div class="col-xs-8 navbar-brand text-center">
                             {%= o.title %}
-                        </span>
+                        </div>
+                        <div class="col-xs-2">
+                        </div>
                     </div>
                 </div>
             </nav> 

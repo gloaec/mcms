@@ -253,9 +253,9 @@ var app = {
 
      
     onHashChange: function(e) {
-        var back = false;
         var hash = window.location.hash, length = window.history.length;
         var page = window.location.hash.slice(1);
+        var back = page == 'home';
 
         if (app.hashHistory.length && app.historyLength == length) {
             if (app.hashHistory[app.hashHistory.length - 2] == hash) {
