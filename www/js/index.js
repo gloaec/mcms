@@ -19,7 +19,7 @@
 
 // Constants
 var DEBUG = false;
-var LOCAL_ASSETS_URL = 'http://localhost/~ghis/momo/www/';
+var DEBUG_WWW_URL = 'http://localhost/~ghis/momo/www/';
 var ANIMATION_ENABLED = true;
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
 var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
@@ -203,7 +203,7 @@ var app = {
 
             });
         } else {
-            var manifestResponse = response.replace(/assets\//g, LOCAL_ASSETS_URL+'assets/');
+            var manifestResponse = response.replace(/assets\//g, DEBUG_WWW_URL+'assets/');
             cb(manifestResponse);
         }
     },
@@ -280,8 +280,8 @@ var app = {
                 cb();
             });
         } else {
-            link.href = LOCAL_ASSETS_URL+"assets/index.css";
-            script.src = LOCAL_ASSETS_URL+"assets/index.js";
+            link.href = DEBUG_WWW_URL+"assets/index.css";
+            script.src = DEBUG_WWW_URL+"assets/index.js";
 
             document.getElementsByTagName("head")[0].appendChild(link);
             document.getElementsByTagName("head")[0].appendChild(script);
