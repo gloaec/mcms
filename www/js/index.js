@@ -84,6 +84,8 @@ var app = {
     
     // JSON Local Manifest loading function
     loadLocalManifest: function(){
+        // TODO : Try/Catch JSON.parse & Ajax failure local JSON fallback
+        // TODO : Distant CSS entry point
         var manifest    = /*localStorage.getItem("momo-manifest") ? JSON.parse(localStorage.getItem("momo-manifest")) :*/ { meta: app.meta };
         var lastUpdate  = localStorage.getItem("momo-timestamp") ? new Date(localStorage.getItem("momo-timestamp")) : new Date(0);
         var url         = manifest.meta.updateUrl;
@@ -185,7 +187,6 @@ var app = {
 
     // Application starter
     start: function(data){
-        alert('start');
         data.id = 'home';
         app.current_page = data.id;
         app.registerPage(data);
