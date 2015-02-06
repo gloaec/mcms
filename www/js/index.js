@@ -90,7 +90,7 @@ var app = {
         var request     = new XMLHttpRequest();
         request.open('GET', url, true);
         request.onload = function() {
-            if (request.status >= 200 && request.status < 400) {
+            if (request.status >= 200 && request.status < 400 || request.status == 0 /* iOS OhMyBuddha!! */) {
                 var data     = JSON.parse(request.responseText);
                 var timeDiff = ((new Date()).getTime() - lastUpdate.getTime()) / 1000;
 
@@ -120,7 +120,7 @@ var app = {
         var request     = new XMLHttpRequest();
         request.open('GET', url, true);
         request.onload = function() {
-            if (request.status >= 200 && request.status < 400) {
+            if (request.status >= 200 && request.status < 400 || request.status == 0 /* iOS OhMyBuddha!! */) {
 
                 // Phone context requires 'FileTransfer' & 'Zip' plugins
                 if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
