@@ -2,9 +2,9 @@
    "title": "Ma ville au quotidien (Local)",
    "icon": "icon.png",
    "contact": "info@example.net",
-   "updateFreq": 100,
-   "updateUrl": "http://localhost/~ghis/index.json",
-   "assetsUrl": "https://perso.entrouvert.org/~fred/ma-ville-assets.zip?1416471664"
+   "updateFreq": 5,
+   "updateUrl": "http://192.168.10.106/entrouvert/index.json",
+   "assetsUrl": "http://192.168.10.106/entrouvert/assets.zip?0.0.1"
  },
  "title": "Ma ville",
  "content": "<p>Bienvenue !</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>",

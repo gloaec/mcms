@@ -17,7 +17,69 @@
  * under the License.
  */
 
+//function onUpdateReady() {
+//      alert('found new version!');
+//}
+//window.applicationCache.addEventListener('updateready', onUpdateReady);
+//if(window.applicationCache.status === window.applicationCache.UPDATEREADY) {
+//      onUpdateReady();
+//}
+
+//var appCache = window.applicationCache;
+//appCache.update();
+//appCache.addEventListener('cached', function()
+//{
+//   /* Cached resource is downloaded */
+//   alert('Cached');
+//}, 
+//false);
+//appCache.addEventListener('checking', function()
+//{
+//   /* Manifest file is downloaded for the first time or if there is an update in the manifest */
+//   alert('Checking');
+//}, 
+//false);
+//appCache.addEventListener('downloading', function()
+//{
+//   /* Content is being updated */
+//   alert('Downloading');
+//}, 
+//false);
+//appCache.addEventListener('error', function(e)
+//{
+//   /* Error occurred */ 
+//   alert('Error');
+//}, 
+//false);
+//appCache.addEventListener('noupdate', function()
+//{
+//   /* No update is available */
+//   alert('No Update');
+//}, 
+//false);
+//appCache.addEventListener('obsolete', function()
+//{
+//   /* Manifest file cannot be found */
+//   alert('Obsolete');
+//}, 
+//false);
+//appCache.addEventListener('progress', function()
+//{
+//   /* Cache file is being downloaded */
+//   alert('Progress');
+//}, 
+//false);
+//appCache.addEventListener('updateready', function()
+//{
+//   /* All resources for update are downloaded */ 
+//   alert('Update Ready');
+//}, 
+//false);
+
+//appCache.update();
+
 // Constants
+var LOCAL_ASSETS_URL = 'file:///home/ghis/Workspace/momo/www/';
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
 var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
 var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
@@ -31,26 +93,26 @@ if ('addEventListener' in document) {
 }
 
 // Object extend method
-var extend = function ( defaults, options ) {
-    var extended = {};
-    var prop;
-    for (prop in defaults) {
-        if (Object.prototype.hasOwnProperty.call(defaults, prop)) {
-            extended[prop] = defaults[prop];
-        }
-    }
-    for (prop in options) {
-        if (Object.prototype.hasOwnProperty.call(options, prop)) {
-            extended[prop] = options[prop];
-        }
-    }
-    return extended;
-};
+//var extend = function ( defaults, options ) {
+//    var extended = {};
+//    var prop;
+//    for (prop in defaults) {
+//        if (Object.prototype.hasOwnProperty.call(defaults, prop)) {
+//            extended[prop] = defaults[prop];
+//        }
+//    }
+//    for (prop in options) {
+//        if (Object.prototype.hasOwnProperty.call(options, prop)) {
+//            extended[prop] = options[prop];
+//        }
+//    }
+//    return extended;
+//};
 
 // Application
 var app = {
 
-    // Default Manifest
+    // Minimal Default Manifest
     pages: {},
     meta: {
         'title': 'Momo Application',
@@ -58,7 +120,7 @@ var app = {
         'updateUrl': 'index.json'
     },
 
-    // Misc
+    // Misc Data
     current       : 0,
     isAnimating   : false,
     endCurrPage   : false,
@@ -69,18 +131,38 @@ var app = {
     // Application Constructor
     initialize: function() {
         this.bindEvents();
-        this.loadLocalManifest();
     },
 
     // Application events
     bindEvents: function() {
-        document.addEventListener('deviceready', this.onDeviceReady, false);
+
+        // Navigation Handler
         window.addEventListener('hashchange', this.onHashChange, false);
+
+        // Device Handler
+        window.isphone = false;
+        if(document.URL.indexOf("http://") === -1 
+            && document.URL.indexOf("https://") === -1) {
+            window.isphone = true;
+        }
+
+        // Phone Context
+        if( window.isphone ) { 
+            document.addEventListener("deviceready", this.onDeviceReady, false);
+        // Testing Context
+        } else { 
+            this.onDeviceReady();
+        }
+    },
+
+    // Device ready callback
+    onDeviceReady: function() {
+        app.loadLocalManifest();
     },
     
     // JSON Local Manifest loading function
     loadLocalManifest: function(){
-        var manifest    = localStorage.getItem("momo-manifest") ? JSON.parse(localStorage.getItem("momo-manifest")) : { meta: app.meta };
+        var manifest    = /*localStorage.getItem("momo-manifest") ? JSON.parse(localStorage.getItem("momo-manifest")) :*/ { meta: app.meta };
         var lastUpdate  = localStorage.getItem("momo-timestamp") ? new Date(localStorage.getItem("momo-timestamp")) : new Date(0);
         var url         = manifest.meta.updateUrl;
         var request     = new XMLHttpRequest();
@@ -88,10 +170,13 @@ var app = {
         request.onload = function() {
             if (request.status >= 200 && request.status < 400) {
                 var data     = JSON.parse(request.responseText);
-                var timeDiff = (new Date()).getTime() - lastUpdate.getTime();
+                var timeDiff = ((new Date()).getTime() - lastUpdate.getTime()) / 1000;
+
+                // UpdateFreq Timeout - Require Update
                 if(timeDiff > data.meta.updateFreq){
                     localStorage.setItem("momo-timestamp", new Date());
                     app.loadDistantManifest(data);
+                // Otherwise Start Application
                 } else {
                     app.start(data);
                 }
@@ -114,9 +199,57 @@ var app = {
         request.open('GET', url, true);
         request.onload = function() {
             if (request.status >= 200 && request.status < 400) {
-                var data = JSON.parse(request.responseText);
+
+                // Phone context requires 'FileTransfer' & 'Zip' plugins
+                if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
+                    window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
+
+                        var rootPath = fileSystem.root.toURL();
+                        var rewrittenResponse = request.responseText.replace(/assets\//g, rootPath+'assets/');
+                        var data = JSON.parse(rewrittenResponse);
+                        var fileTransfer = new FileTransfer();
+                        var uri = encodeURI(data.meta.assetsUrl);
+                        var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
+                        
+                        // Fetch Assets Zip Archive
+                        fileTransfer.download(
+                            // Source
+                            uri, 
+                            // Destination
+                            filePath, 
+                            // Success callback 
+                            function(entry) {
+                                // Unzip Assets
+                                zip.unzip(filePath, rootPath, function(){
+                                    alert('download & unzip successful '+filePath);
+                                    app.start(data);
+                                });
+                            },
+                            // Error callback
+                            function(error) {
+                                alert("download error source " + error.source);
+                                alert("download error target " + error.target);
+                                alert("upload error code" + error.code);
+                            },
+                            // Misc
+                            false,
+                            {
+                                headers: {}
+                            }
+                        );
+                    }, function(error){ 
+                        alert('error filesys');
+                    });
+
+                // Texting Context
+                } else {
+                    var rewrittenResponse = request.responseText.replace(/assets\//g, LOCAL_ASSETS_URL+'assets/');
+                    var data = JSON.parse(rewrittenResponse);
+                    alert('file-transfert & zip plugins not availables');
+                    //document.head.innerHTML += "<base href='file:///home/ghis/Workspace/entrouvert/' />";
+                    app.start(data);
+                }
                 localStorage.setItem("momo-manifest", JSON.stringify(data));
-                app.start(data);
             } else {
                 alert("Cannot load "+url+". Loading local manifest instead.");
                 app.start(data);
@@ -131,6 +264,7 @@ var app = {
 
     // Application starter
     start: function(data){
+        alert('start');
         data.id = 'home';
         app.current_page = data.id;
         app.registerPage(data);
@@ -210,7 +344,6 @@ var app = {
 
     // Navigate to page
     navigate: function(page, back){
-
         var page_obj = app.pages[page];
 
         if(page_obj.external && back){
@@ -218,7 +351,7 @@ var app = {
             return false;
         } else
         if(page_obj.external){
-            if(device.platform === 'Android') // Android
+            if(navigator.app) // Android
                 navigator.app.loadUrl(encodeURI(page_obj.url), { openExternal:true });
             else // iOS and others
                 window.open(encodeURI(page_obj.url), "_system", 'location=yes'); // opens in the app, not in safari
@@ -326,15 +459,6 @@ var app = {
         if(app.current_page != page){
             app.navigate(page, back);
         }
-    },
-
-    // Device ready callback
-    onDeviceReady: function() {
-        app.receivedEvent('deviceready');
-    },
-
-    receivedEvent: function(id) {
-        console.log('Received Event: ' + id);
     },
 
     // Various Javascript Helpers
