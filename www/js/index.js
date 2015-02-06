@@ -17,67 +17,6 @@
  * under the License.
  */
 
-//function onUpdateReady() {
-//      alert('found new version!');
-//}
-//window.applicationCache.addEventListener('updateready', onUpdateReady);
-//if(window.applicationCache.status === window.applicationCache.UPDATEREADY) {
-//      onUpdateReady();
-//}
-
-//var appCache = window.applicationCache;
-//appCache.update();
-//appCache.addEventListener('cached', function()
-//{
-//   /* Cached resource is downloaded */
-//   alert('Cached');
-//}, 
-//false);
-//appCache.addEventListener('checking', function()
-//{
-//   /* Manifest file is downloaded for the first time or if there is an update in the manifest */
-//   alert('Checking');
-//}, 
-//false);
-//appCache.addEventListener('downloading', function()
-//{
-//   /* Content is being updated */
-//   alert('Downloading');
-//}, 
-//false);
-//appCache.addEventListener('error', function(e)
-//{
-//   /* Error occurred */ 
-//   alert('Error');
-//}, 
-//false);
-//appCache.addEventListener('noupdate', function()
-//{
-//   /* No update is available */
-//   alert('No Update');
-//}, 
-//false);
-//appCache.addEventListener('obsolete', function()
-//{
-//   /* Manifest file cannot be found */
-//   alert('Obsolete');
-//}, 
-//false);
-//appCache.addEventListener('progress', function()
-//{
-//   /* Cache file is being downloaded */
-//   alert('Progress');
-//}, 
-//false);
-//appCache.addEventListener('updateready', function()
-//{
-//   /* All resources for update are downloaded */ 
-//   alert('Update Ready');
-//}, 
-//false);
-
-//appCache.update();
-
 // Constants
 var LOCAL_ASSETS_URL = 'file:///home/ghis/Workspace/momo/www/';
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
@@ -91,23 +30,6 @@ if ('addEventListener' in document) {
         FastClick.attach(document.body);
     }, false);
 }
-
-// Object extend method
-//var extend = function ( defaults, options ) {
-//    var extended = {};
-//    var prop;
-//    for (prop in defaults) {
-//        if (Object.prototype.hasOwnProperty.call(defaults, prop)) {
-//            extended[prop] = defaults[prop];
-//        }
-//    }
-//    for (prop in options) {
-//        if (Object.prototype.hasOwnProperty.call(options, prop)) {
-//            extended[prop] = options[prop];
-//        }
-//    }
-//    return extended;
-//};
 
 // Application
 var app = {
@@ -181,12 +103,12 @@ var app = {
                     app.start(data);
                 }
             } else {
-                alert("Cannot load "+url+". Loading local manifest instead.");
+                alert("Cannot load "+url+" [Error "+request.status+"]. Loading local manifest instead.");
                 app.loadDistantManifest({ meta: app.meta });
             }
         };
         request.onerror = function() {
-            alert("Cannot load "+url+". Loading local manifest instead.");
+            alert("Cannot load "+url+" [Unknown Error]. Loading local manifest instead.");
             app.loadDistantManifest({ meta: app.meta });
         };
         request.send();
@@ -251,12 +173,12 @@ var app = {
                 }
                 localStorage.setItem("momo-manifest", JSON.stringify(data));
             } else {
-                alert("Cannot load "+url+". Loading local manifest instead.");
+                alert("Cannot load "+url+" [Error "+request.status+"]. Loading local manifest instead.");
                 app.start(data);
             }
         };
         request.onerror = function() {
-            alert("Cannot load "+url+". Loading local manifest instead.");
+            alert("Cannot load "+url+" [Unknown Error]. Loading local manifest instead.");
             app.start(data);
         };
         request.send();
