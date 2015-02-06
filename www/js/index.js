@@ -143,7 +143,6 @@ var app = {
                             function(entry) {
                                 // Unzip Assets
                                 zip.unzip(filePath, rootPath, function(){
-                                    alert('download & unzip successful '+filePath);
                                     app.start(data);
                                 });
                             },
