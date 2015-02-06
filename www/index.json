@@ -3,7 +3,7 @@
    "icon": "icon.png",
    "contact": "info@example.net",
    "updateFreq": 5,
-   "updateUrl": "http://pwr.link/entrouvert/index.json",
+   "updateUrl": "http://pwr.link/entrouvert/index.json?0.0.1",
    "assetsUrl": "http://pwr.link/entrouvert/assets.zip?0.0.1"
  },
  "title": "Ma ville",

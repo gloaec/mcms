@@ -18,7 +18,9 @@
  */
 
 // Constants
-var LOCAL_ASSETS_URL = 'file:///home/ghis/Workspace/momo/www/';
+var DEBUG = false;
+var LOCAL_ASSETS_URL = 'http://localhost/~ghis/momo/www/';
+var ANIMATION_ENABLED = true;
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
 var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
 var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
@@ -34,12 +36,17 @@ if ('addEventListener' in document) {
 // Application
 var app = {
 
-    // Minimal Default Manifest
+    // Pages Registry
     pages: {},
-    meta: {
-        'title': 'Momo Application',
-        'contact': 'contact@cadoles.com',
-        'updateUrl': 'index.json'
+
+    // Minimal Default Manifest
+    manifest: {
+        meta: {
+            'title': 'Momo Application',
+            'contact': 'contact@cadoles.com',
+            'updateUrl': 'index.json',
+            'updateFreq': 0
+        }
     },
 
     // Misc Data
@@ -49,6 +56,7 @@ var app = {
     endNextPage   : false,
     hashHistory   : [window.location.hash],
     historyLength : window.history.length,
+    rootPath      : '',
 
     // Application Constructor
     initialize: function() {
@@ -79,118 +87,225 @@ var app = {
 
     // Device ready callback
     onDeviceReady: function() {
-        app.loadLocalManifest();
+        app.loadManifest();
     },
-    
-    // JSON Local Manifest loading function
-    loadLocalManifest: function(){
-        // TODO : Try/Catch JSON.parse & Ajax failure local JSON fallback
-        // TODO : Distant CSS entry point
-        var manifest    = /*localStorage.getItem("momo-manifest") ? JSON.parse(localStorage.getItem("momo-manifest")) :*/ { meta: app.meta };
-        var lastUpdate  = localStorage.getItem("momo-timestamp") ? new Date(localStorage.getItem("momo-timestamp")) : new Date(0);
-        var url         = manifest.meta.updateUrl;
-        var request     = new XMLHttpRequest();
-        request.open('GET', url, true);
-        request.onload = function() {
-            if (request.status >= 200 && request.status < 400 || request.status == 0 /* iOS OhMyBuddha!! */) {
-                var data     = JSON.parse(request.responseText);
-                var timeDiff = ((new Date()).getTime() - lastUpdate.getTime()) / 1000;
 
-                // UpdateFreq Timeout - Require Update
-                if(timeDiff > data.meta.updateFreq){
-                    localStorage.setItem("momo-timestamp", new Date());
-                    app.loadDistantManifest(data);
-                // Otherwise Start Application
-                } else {
-                    app.start(data);
-                }
+    // JSON Manifest loading function
+    loadManifest: function(){
+        if(DEBUG) alert('load '+JSON.stringify(app.manifest));
+
+        var updateRequired = true;
+
+        // In case the url is incorrect, we get the backup manifest
+        app.safeManifest = app.manifest;
+
+        // Get manifest from localStorage if it exists
+        if(localStorage.getItem("momo-manifest")){
+            try {
+                app.manifest = JSON.parse(localStorage.getItem("momo-manifest"));
+            } catch(e) {}
+        }
+
+        // Checklast Update
+        var lastUpdate   = localStorage.getItem("momo-timestamp") ? new Date(localStorage.getItem("momo-timestamp")) : new Date(0);
+        var timeDiff     = ((new Date()).getTime() - lastUpdate.getTime()) / 1000;
+        updateRequired   = timeDiff > app.manifest.meta.updateFreq;
+
+        // Start Application Return if no need for update
+        if(!updateRequired){
+            app.start();
+            return;
+        }
+
+        // Start AJAX
+        var url          = app.manifest.meta.updateUrl;
+        var request      = new XMLHttpRequest();
+
+        request.open('GET', url, true);
+
+        // AJAX Callback
+        request.onload = function() {
+
+            // AJAX success
+            if (request.status >= 200 && request.status < 400 || request.status == 0 /* iOS OhMyBuddha!! */) {
+
+                // Patch raw text response for filesystem relative paths
+                app.patchResponse(request.responseText, function(manifestResponse){
+
+                    try {
+                        // Override current manifest
+                        app.manifest = JSON.parse(manifestResponse);
+
+                        // Store manifest if parsable
+                        localStorage.setItem("momo-manifest", manifestResponse);
+                    } catch(e) {
+                        if(DEBUG) alert('Cannot parse application manifest '+url);
+                    }
+
+                    // Reload if new manifest url
+                    if(url != app.manifest.meta.updateUrl){
+                        app.loadManifest();
+                    // Otherwise fetch assets and start application
+                    } else if(updateRequired) {
+                        app.fetchAssets(function(){
+                            app.start();
+                        });
+                    // Start application with no udpates
+                    } else {
+                        app.start();
+                    }
+                });
+
+            // Handle AJAX Error
             } else {
-                alert("Cannot load "+url+" [Error "+request.status+"]. Loading local manifest instead.");
-                app.loadDistantManifest({ meta: app.meta });
+                app.onAjaxError(url, request);
             }
         };
+
+        // Handle AJAX Error
         request.onerror = function() {
-            alert("Cannot load "+url+" [Unknown Error]. Loading local manifest instead.");
-            app.loadDistantManifest({ meta: app.meta });
+            app.onAjaxError(url);
         };
+
+        // Send AJAX
         request.send();
     },
 
-    // JSON Distant Manifest loading function
-    loadDistantManifest: function(data){
-        var url         = data.meta.updateUrl;
-        var request     = new XMLHttpRequest();
-        request.open('GET', url, true);
-        request.onload = function() {
-            if (request.status >= 200 && request.status < 400 || request.status == 0 /* iOS OhMyBuddha!! */) {
+    // Start Application with safe manifest
+    onAjaxError: function(url, request){
+        if(DEBUG) alert("Cannot load "+url+" [Error "+(request ? request.status : 'Unknown')+"]. Loading local manifest instead.");
 
-                // Phone context requires 'FileTransfer' & 'Zip' plugins
-                if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
-                    window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
+        // Store proper manifest
+        localStorage.setItem("momo-manifest", JSON.stringify(app.safeManifest));
 
-                        var rootPath = fileSystem.root.toURL();
-                        var rewrittenResponse = request.responseText.replace(/assets\//g, rootPath+'assets/');
-                        var data = JSON.parse(rewrittenResponse);
-                        var fileTransfer = new FileTransfer();
-                        var uri = encodeURI(data.meta.assetsUrl);
-                        var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
-                        
-                        // Fetch Assets Zip Archive
-                        fileTransfer.download(
-                            // Source
-                            uri, 
-                            // Destination
-                            filePath, 
-                            // Success callback 
-                            function(entry) {
-                                // Unzip Assets
-                                zip.unzip(filePath, rootPath, function(){
-                                    app.start(data);
-                                });
-                            },
-                            // Error callback
-                            function(error) {
-                                alert("download error source " + error.source);
-                                alert("download error target " + error.target);
-                                alert("upload error code" + error.code);
-                            },
-                            // Misc
-                            false,
-                            {
-                                headers: {}
-                            }
-                        );
-                    }, function(error){ 
-                        alert('error filesys');
-                    });
+        // Restore safe manifest 
+        app.manifest = app.safeManifest;
 
-                // Texting Context
-                } else {
-                    var rewrittenResponse = request.responseText.replace(/assets\//g, LOCAL_ASSETS_URL+'assets/');
-                    var data = JSON.parse(rewrittenResponse);
-                    alert('file-transfert & zip plugins not availables');
-                    //document.head.innerHTML += "<base href='file:///home/ghis/Workspace/entrouvert/' />";
-                    app.start(data);
-                }
-                localStorage.setItem("momo-manifest", JSON.stringify(data));
-            } else {
-                alert("Cannot load "+url+" [Error "+request.status+"]. Loading local manifest instead.");
-                app.start(data);
-            }
-        };
-        request.onerror = function() {
-            alert("Cannot load "+url+" [Unknown Error]. Loading local manifest instead.");
-            app.start(data);
-        };
-        request.send();
+        // And start application
+        app.start();
+    },
+
+    // Patch manifest response to set filesystem's relative paths (offline)
+    patchResponse: function(response, cb){
+
+        // Phone context requires 'FileTransfer' & 'Zip' plugins
+        if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
+            window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
+
+                // Get filesystem's relative cache folder
+                var rootPath = fileSystem.root.toURL();
+
+                // Patch path to local in manifest response
+                var manifestResponse = response.replace(/assets\//g, rootPath+'assets/');
+
+                // Callback
+                cb(manifestResponse);
+
+            });
+        } else {
+            var manifestResponse = response.replace(/assets\//g, LOCAL_ASSETS_URL+'assets/');
+            cb(manifestResponse);
+        }
+    },
+
+    // Get distant zip asset archive and update local cache
+    fetchAssets: function(cb){
+
+        if(DEBUG) alert('fetch assets');
+
+        if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
+            window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
+
+                var rootPath = fileSystem.root.toURL();
+                var fileTransfer = new FileTransfer();
+                var uri = encodeURI(app.manifest.meta.assetsUrl);
+                var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
+                
+                // Fetch Assets Zip Archive
+                fileTransfer.download(
+                    // Source
+                    uri, 
+                    // Destination
+                    filePath, 
+                    // Success callback 
+                    function(entry) {
+                        // Unzip Assets
+                        zip.unzip(filePath, rootPath, function(){
+                            if(DEBUG) alert('unzip success');
+                            cb();
+                        });
+                    },
+                    // Error callback
+                    function(error) {
+                        if(DEBUG) alert("download error source " + error.source);
+                        if(DEBUG) alert("download error target " + error.target);
+                        if(DEBUG) alert("upload error code" + error.code);
+                        cb();
+                    },
+                    // Misc
+                    false,
+                    {
+                        headers: {}
+                    }
+                );
+            }, function(error){ 
+                if(DEBUG) alert('Filesystem error');
+                cb();
+            });
+        } else {
+            if(DEBUG) alert('Plugins "zip" & "file-transfer" not available (local mode ?)');
+            cb();
+        }
+    },
+
+    appendAssets: function(cb){
+        var link = document.createElement("link");
+        link.type = "text/css";
+        link.rel = "stylesheet";
+
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+
+        if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
+            window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
+
+                // Get filesystem's relative cache folder
+                var rootPath = fileSystem.root.toURL();
+                
+                link.href = rootPath+"assets/index.css";
+                script.src = rootPath+"assets/index.js";
+
+                document.getElementsByTagName("head")[0].appendChild(link);
+                document.getElementsByTagName("head")[0].appendChild(script);
+                cb();
+            });
+        } else {
+            link.href = LOCAL_ASSETS_URL+"assets/index.css";
+            script.src = LOCAL_ASSETS_URL+"assets/index.js";
+
+            document.getElementsByTagName("head")[0].appendChild(link);
+            document.getElementsByTagName("head")[0].appendChild(script);
+            cb();
+        }
     },
 
     // Application starter
-    start: function(data){
-        data.id = 'home';
-        app.current_page = data.id;
-        app.registerPage(data);
-        app.render(data);
+    start: function(){
+        if(DEBUG) alert('start '+JSON.stringify(app.manifest));
+
+        // Default route to home
+        app.manifest.id = app.current_page = 'home';
+
+        // Import Scripts & Styles
+        app.appendAssets(function(){ 
+
+            // Regiter pages tree
+            app.registerPage(app.manifest);
+    
+            // Render Homepage
+            app.render(app.manifest);
+
+        });
     },
 
     // Recursive function to index page from JSON Manifest
@@ -257,9 +372,11 @@ var app = {
     // Render Page
     renderPage: function(page){
         if(page instanceof Object){
+            if(DEBUG) alert('render page '+JSON.stringify(page));
             return tmpl("momo-page-tmpl", page);
         } else
         if(typeof page === 'string' || page instanceof String || page instanceof Number){
+            if(DEBUG) alert('render page '+page);
             return app.renderPage(app.pages[page]);
         }
     },
@@ -292,49 +409,52 @@ var app = {
         var $outpage = document.getElementById(app.current_page);
         var $inpage  = document.getElementById(page);
 
-        //$inpage.classList.add('momo-page-current');
-        //$outpage.classList.remove('momo-page-current');
+        if(!ANIMATION_ENABLED){
+            $inpage.classList.add('momo-page-current');
+            $outpage.classList.remove('momo-page-current');
+        } else {
 
-        var outCb = function(){
-            $outpage.removeEventListener('animationend',       outCb);
-            $outpage.removeEventListener('webkitAnimationEnd', outCb);
-            $outpage.removeEventListener('oAnimationEnd',      outCb);
-            $outpage.removeEventListener('MSAnimationEnd',     outCb);
-            app.endCurrPage = true;
-            if(app.endNextPage){
-                app.onAnimationEnd($outpage, $inpage, back);
-            }
-        };
+            var outCb = function(){
+                $outpage.removeEventListener('animationend',       outCb);
+                $outpage.removeEventListener('webkitAnimationEnd', outCb);
+                $outpage.removeEventListener('oAnimationEnd',      outCb);
+                $outpage.removeEventListener('MSAnimationEnd',     outCb);
+                app.endCurrPage = true;
+                if(app.endNextPage){
+                    app.onAnimationEnd($outpage, $inpage, back);
+                }
+            };
 
-        var inCb = function(){
-            $inpage.removeEventListener('animationend',       inCb);
-            $inpage.removeEventListener('webkitAnimationEnd', inCb);
-            $inpage.removeEventListener('oAnimationEnd',      inCb);
-            $inpage.removeEventListener('MSAnimationEnd',     inCb);
-            app.endNextPage = true;
-            if(app.endCurrPage){
-                app.onAnimationEnd($outpage, $inpage, back);
-            }
-        };
+            var inCb = function(){
+                $inpage.removeEventListener('animationend',       inCb);
+                $inpage.removeEventListener('webkitAnimationEnd', inCb);
+                $inpage.removeEventListener('oAnimationEnd',      inCb);
+                $inpage.removeEventListener('MSAnimationEnd',     inCb);
+                app.endNextPage = true;
+                if(app.endCurrPage){
+                    app.onAnimationEnd($outpage, $inpage, back);
+                }
+            };
 
-        var out_classes = (back ? ANIMATION_BACK_OUT_CLASS : ANIMATION_OUT_CLASS).split(' ');
-        for(var i = 0; i < out_classes.length; i++)
-            $outpage.classList.add(out_classes[i]);
-        $outpage.addEventListener('animationend',       outCb, false);
-        $outpage.addEventListener('webkitAnimationEnd', outCb, false);
-        $outpage.addEventListener('oAnimationEnd',      outCb, false);
-        $outpage.addEventListener('MSAnimationEnd',     outCb, false);
+            var out_classes = (back ? ANIMATION_BACK_OUT_CLASS : ANIMATION_OUT_CLASS).split(' ');
+            for(var i = 0; i < out_classes.length; i++)
+                $outpage.classList.add(out_classes[i]);
+            $outpage.addEventListener('animationend',       outCb, false);
+            $outpage.addEventListener('webkitAnimationEnd', outCb, false);
+            $outpage.addEventListener('oAnimationEnd',      outCb, false);
+            $outpage.addEventListener('MSAnimationEnd',     outCb, false);
 
-        $inpage.classList.add('momo-page-current');
-        $inpage.innerHTML = app.renderPage(page_obj);
+            $inpage.classList.add('momo-page-current');
+            $inpage.innerHTML = app.renderPage(page_obj);
 
-        var in_classes = (back ? ANIMATION_BACK_IN_CLASS : ANIMATION_IN_CLASS).split(' ');
-        for(var i = 0; i < in_classes.length; i++)
-            $inpage.classList.add(in_classes[i]);
-        $inpage.addEventListener('animationend',       inCb, false);
-        $inpage.addEventListener('webkitAnimationEnd', inCb, false);
-        $inpage.addEventListener('oAnimationEnd',      inCb, false);
-        $inpage.addEventListener('MSAnimationEnd',     inCb, false);
+            var in_classes = (back ? ANIMATION_BACK_IN_CLASS : ANIMATION_IN_CLASS).split(' ');
+            for(var i = 0; i < in_classes.length; i++)
+                $inpage.classList.add(in_classes[i]);
+            $inpage.addEventListener('animationend',       inCb, false);
+            $inpage.addEventListener('webkitAnimationEnd', inCb, false);
+            $inpage.addEventListener('oAnimationEnd',      inCb, false);
+            $inpage.addEventListener('MSAnimationEnd',     inCb, false);
+        }
 
         app.current_page = page;
     },
