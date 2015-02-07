@@ -373,7 +373,7 @@ var app = {
     renderPage: function(page){
         if(page instanceof Object){
             if(DEBUG) alert('render page '+JSON.stringify(page));
-            return tmpl("momo-page-tmpl", page);
+            return tmpl("momo-page-tmpl", app.utils.extend(page, {meta: app.manifest.meta}));
         } else
         if(typeof page === 'string' || page instanceof String || page instanceof Number){
             if(DEBUG) alert('render page '+page);
@@ -505,6 +505,22 @@ var app = {
 
     // Various Javascript Helpers
     utils: {
+
+        extend: function ( defaults, options ) {
+            var extended = {};
+            var prop;
+            for (prop in defaults) {
+                if (Object.prototype.hasOwnProperty.call(defaults, prop)) {
+                    extended[prop] = defaults[prop];
+                }
+            }
+            for (prop in options) {
+                if (Object.prototype.hasOwnProperty.call(options, prop)) {
+                    extended[prop] = options[prop];
+                }
+            }
+            return extended;
+        },
 
         trim: function(str){
             return (str || '').replace(/^\s+|\s+$/g, '');

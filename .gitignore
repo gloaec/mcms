@@ -5,3 +5,6 @@
 
 # Builds
 platforms/*
+!platforms/.gitkeep
+plugins/*
+!plugins/.gitkeep

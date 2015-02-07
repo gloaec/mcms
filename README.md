@@ -14,6 +14,18 @@ With [node](http://nodejs.org/) installed (avoid outdated *apt-get* package):
 
     sudo npm install phonegap -g
 
+Install cordovas plugins:
+
+    phonegap plugin add org.apache.cordova.file-transfer
+    phonegap plugin add org.chromium.zip
+    phonegap plugin add org.apache.cordova.inappbrowser  # optional
+
+If plugin registry server seems to be down :'( use git instead ;)
+
+    phonegap plugin add https://github.com/apache/cordova-plugin-file-transfer.git
+    phonegap plugin add https://github.com/MobileChromeApps/zip.git
+    phonegap plugin add https://github.com/apache/cordova-plugin-inappbrowser.git
+
 ## Assets Management
 
 Momo implements a self-update mecanism based on AJAX, localStorage, cordova
@@ -99,9 +111,42 @@ launch the server with the option :
 
     phonegap serve --no-autoreload
 
+## Define target platforms
+
+First, add the plateforms you wish to build a new release on:
+
+Before you can build the project, you need to specify a set of target platforms.
+Your ability to run these commands depends on whether your machine supports each
+SDK, and whether you have already installed each SDK.
+
+Run any of these from a Mac:
+
+    phonegap platform add ios
+    phonegap platform add amazon-fireos
+    phonegap platform add android
+    phonegap platform add blackberry10
+    phonegap platform add firefoxos
+
+Run any of these from a Windows machine, where wp refers to different versions
+of the Windows Phone operating system:
+
+    phonegap platform add wp8
+    phonegap platform add windows
+    phonegap platform add amazon-fireos
+    phonegap platform add android
+    phonegap platform add blackberry10
+    phonegap platform add firefoxos
+
+Run this to check your current set of platforms:
+
+    phonegap platforms ls
+
+See more on [Cordova CLI
+Interface](http://cordova.apache.org/docs/en/4.0.0/guide_cli_index.md.html)
+
 ## Build Application
 
-In order to build application for all intalled platform, use:
+Then in order to build application for all configured platform, use:
 
     phonegap build
 

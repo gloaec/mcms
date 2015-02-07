@@ -41,8 +41,6 @@
         <!-- Main Template -->
         <script type="text/x-tmpl" id="momo-main-tmpl">
 
-            <div class="momo-page-wrapper">
-
                 <!-- Navbar -->
                 <nav class="navbar navbar-default navbar-fixed-top momo-navbar">
                     <div class="container-fluid">
@@ -60,87 +58,93 @@
                 <!-- Pages List -->
                 <div id="momo-pages"></div>
 
+        </script>
+
+        <!-- Page Template -->
+        <script type="text/x-tmpl" id="momo-page-tmpl">
+
+            <div class="{% if(o.url){ %}momo-frame-wrapper{% } else { %}momo-page-wrapper{% } %}">
+        
+                <nav class="navbar navbar-inverse navbar-static-top momo-subnavbar">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-xs-2 navbar-btn text-left">
+                                {% if(o.id != 'home'){ %}
+                                    <a href="#" class="btn btn-success pull-left" onclick="window.history.back(); return false;">
+                                        <i class="fa fa-chevron-left"></i>
+                                    </a>
+                                {% } %}
+                            </div>
+                            <div class="col-xs-8 text-center">
+                                <div class="navbar-brand text-center">
+                                    {%= o.title %}
+                                </div>
+                            </div>
+                            <div class="col-xs-2">
+                            </div>
+                        </div>
+                    </div>
+                </nav> 
+
+                <div class="container-fluid">
+                    <section class="momo-page-content">{%# o.content %}</section>
+                </div>
+
+                {% if(o.url){ %}
+                    <iframe src="{%= o.url %}"></iframe>
+                {% } %}
+       
+                {% if(o.pages){ %}
+                    <div class="list-group momo-page-pages">
+                        {% for (var i = 0; i < o.pages.length; i++) { %}
+                            <a href="#{%= o.pages[i] %}" class="list-group-item">
+                                {%= app.pages[o.pages[i]].title %}
+                                {% if(app.pages[o.pages[i]].external) { %}
+                                    <i class="fa fa-external-link pull-right"></i>
+                                {% } else { %}
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                {% } %}
+                            </a>
+                        {% } %}
+                    </div>
+                {% } %}
+
+                {% if(o.seealso){ %}
+                    <div class="container-fluid">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                See Also
+                            </div>
+                            <div class="list-group momo-page-pages">
+                                {% for (var i = 0; i < o.seealso.length; i++) { %}
+                                    <a href="#{%= o.seealso[i] %}" class="list-group-item">
+                                        {%= app.pages[o.seealso[i]].title %}
+                                        {% if(app.pages[o.seealso[i]].external) { %}
+                                            <i class="fa fa-external-link pull-right"></i>
+                                        {% } else { %}
+                                            <i class="fa fa-angle-right pull-right"></i>
+                                        {% } %}
+                                    </a>
+                                {% } %}
+                            </div>
+                        </div>
+                    </div>
+                {% } %}
+
             </div>
   
             <!-- Footer -->
             <footer class="momo-footer">
                 <div class="container-fluid clearfix">
+                    <p class="navbar-text pull-left">
+                        <a href="https://dev.entrouvert.org/projects/momo/" target="_system">Momo repository</a>
+                    </p>
                     <p class="navbar-text pull-right">
                         <a href="mailto:{%= o.contact %}" class="momo-contact">{%= o.meta.contact %}</a>
                     </p>
                 </div>
             </footer>
 
-        </script>
-
-        <!-- Page Template -->
-        <script type="text/x-tmpl" id="momo-page-tmpl">
-        
-            <nav class="navbar navbar-inverse navbar-static-top momo-subnavbar">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-xs-2 navbar-btn text-left">
-                            {% if(o.id != 'home'){ %}
-                                <a href="#" class="btn btn-success pull-left" onclick="window.history.back(); return false;">
-                                    <i class="fa fa-chevron-left"></i>
-                                </a>
-                            {% } %}
-                        </div>
-                        <div class="col-xs-8 text-center">
-                            <div class="navbar-brand text-center">
-                                {%= o.title %}
-                            </div>
-                        </div>
-                        <div class="col-xs-2">
-                        </div>
-                    </div>
-                </div>
-            </nav> 
-
-            <div class="container-fluid">
-                <section class="momo-page-content">{%# o.content %}</section>
-            </div>
-
-            {% if(o.url){ %}
-                <iframe src="{%= o.url %}"></iframe>
-            {% } %}
-       
-            {% if(o.pages){ %}
-                <div class="list-group momo-page-pages">
-                    {% for (var i = 0; i < o.pages.length; i++) { %}
-                        <a href="#{%= o.pages[i] %}" class="list-group-item">
-                            {%= app.pages[o.pages[i]].title %}
-                            {% if(app.pages[o.pages[i]].external) { %}
-                                <i class="fa fa-external-link pull-right"></i>
-                            {% } else { %}
-                                <i class="fa fa-angle-right pull-right"></i>
-                            {% } %}
-                        </a>
-                    {% } %}
-                </div>
-            {% } %}
-
-            {% if(o.seealso){ %}
-                <div class="container-fluid">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            See Also
-                        </div>
-                        <div class="list-group momo-page-pages">
-                            {% for (var i = 0; i < o.seealso.length; i++) { %}
-                                <a href="#{%= o.seealso[i] %}" class="list-group-item">
-                                    {%= app.pages[o.seealso[i]].title %}
-                                    {% if(app.pages[o.seealso[i]].external) { %}
-                                        <i class="fa fa-external-link pull-right"></i>
-                                    {% } else { %}
-                                        <i class="fa fa-angle-right pull-right"></i>
-                                    {% } %}
-                                </a>
-                            {% } %}
-                        </div>
-                    </div>
-                </div>
-            {% } %}
 
         </script>
 

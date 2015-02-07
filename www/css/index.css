@@ -32,22 +32,7 @@ html, body,
 .momo-loading {
     height: 100%;
     width: 100%;
-}
-
-#momo-main {
-    display: table;
-}
-
-.momo-loading {
-    display: table-cell;
-    vertical-align: middle; 
-    text-align: center;
-    padding-bottom: 60px;
-}
-
-.momo-page {
-    background: url("../img/greyzz.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
-    box-shadow: 0 0 20px #000;
+    overflow: hidden;
 }
 
 body {
@@ -63,14 +48,45 @@ body {
 }
 
 /* Portrait layout (default) */
-.momo-page-wrapper {
+#momo-main {
+    display: table;
+}
+
+.momo-loading {
+    display: table-cell;
+    vertical-align: middle; 
+    text-align: center;
+    padding-bottom: 60px;
+}
+
+.momo-page {
+    background: url("../img/greyzz.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 0 20px #000;
+    overflow: hidden;
+}
+.momo-page-wrapper,
+.momo-frame-wrapper {
     min-height: 100%;
     height: auto !important;
-    height: 100%;
     margin: 0 auto -60px;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
 }
-.momo-footer, .push {
+.momo-frame-wrapper {
+    height: 100% !important;
+}
+.momo-page-wrapper:after {
+    content: " ";
+    display: block;
+}
+.momo-footer,
+.momo-page-wrapper:after {
     height: 60px;
+}
+.momo-footer {
+    position: relative;
+    z-index: 999;
 }
 .momo-subnavbar {
     margin-top: 1px;
