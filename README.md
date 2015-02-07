@@ -1,10 +1,10 @@
-# Momo
+# Momo
 
 Momo is a template based on Cordova/Phonegap that aims to easily design some
 cross-platform applications. The whole application content is described in a
 JSON manifest and It implements its own self-update mecanisms.
 
-## Installation
+## Installation
 
 Clone the repo:
 
@@ -48,7 +48,7 @@ And here is what is supposed to be the content of `assets.zip`:
 - `index.css`: A css stylesheet that will be injected as well
 - `*.[png,woff,...]`: images, fonts & other static files
 
-In you `www/index.json` pages content, you must specify url to you assets using
+In the `www/index.json` pages content, you must specify url to you assets using
 relative path prefixed with `assets/`, like so:
 
     {
