@@ -397,6 +397,7 @@ var app = {
             return false;
         }
 
+        // Keep try to navigate until previous animation is done.
         if(app.isAnimating) {
             setTimeout(function(){
                 app.navigate(page, back);
@@ -490,7 +491,6 @@ var app = {
                 app.hashHistory = app.hashHistory.slice(0, -1);
                 back = true; 
             } else {
-                //if(!app.pages[page].external)
                 app.hashHistory.push(hash);
             }
         } else {
@@ -505,25 +505,6 @@ var app = {
 
     // Various Javascript Helpers
     utils: {
-
-        updateEl: function(selector, html){
-            var $el = document.querySelectorAll(selector);
-            for (var i = 0; i < $el.length; i++)
-              $el[i].innerHTML = html;
-        },
-
-        renderLinks: function(links){
-            var html = "";
-            for(var i = 0; i < links.length; i++){
-                var link = links[i];
-                var page = app.pages[link];
-                html += '<a href="#'+link+'" ';
-                html += 'class="list-group-item" >';
-                html += app.pages[link].title;
-                html += '</a>';
-            }
-            return html;
-        },
 
         trim: function(str){
             return (str || '').replace(/^\s+|\s+$/g, '');
