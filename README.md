@@ -86,11 +86,11 @@ must be strings* in your console. This is due to your localmachine that doesn't
 expose the sensors and the software components supported by cordova. But those
 errors aren't blocking, you can keep doing stuff.
 
-There is a much more convenient to test you app which is to use the [PhoneGap
-Developper App](http://app.phonegap.com/). With this, you'll be able to test
-your app directly into you device. Note that cordova's plugins and librairies
-are not usable using `phonegap serve`, so you must provide some environement
-hooks in your code.
+There is a much more convenient way to test you app which is to use the
+[PhoneGap Developper App](http://app.phonegap.com/). With this, you'll be able
+to test your app directly into you device. Note that cordova's plugins and
+librairies are not usable using `phonegap serve`, so you must provide some
+environement hooks in your code.
 
 Make sure you don't browse the app twice at the same time, the phonegap's
 autoreload mechanism uses socket.io that gets confused and keeps reloading the
@@ -99,7 +99,7 @@ launch the server with the option :
 
     phonegap serve --no-autoreload
 
-### Build Application
+## Build Application
 
 In order to build application for all intalled platform, use:
 
@@ -112,4 +112,6 @@ You can also build for a specific platform [`ios`, `android`, etc.]:
 To build a new "ready-to-publish" release, use the flag:
     
     phongap build --release
+
+Find the built releases in the `platforms/` folder.
     
