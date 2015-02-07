@@ -94,7 +94,7 @@ environement hooks in your code.
 
 Make sure you don't browse the app twice at the same time, the phonegap's
 autoreload mechanism uses socket.io that gets confused and keeps reloading the
-app. If anyhow you wish to use many browsers in parallel, you may want
+app. If anyhow you wish to use many browsers in parallel, you may want to
 launch the server with the option :
 
     phonegap serve --no-autoreload
@@ -115,3 +115,6 @@ To build a new "ready-to-publish" release, use the flag:
 
 Find the built releases in the `platforms/` folder.
     
+## License
+
+Momo is licensed under the [GNU General Public License v3.0](http://www.gnu.org/) 
