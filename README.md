@@ -22,6 +22,7 @@ Install cordovas plugins:
 
 If plugin registry server seems to be down :'( use git instead ;)
 
+    phonegap plugin add https://github.com/apache/cordova-plugin-file.git
     phonegap plugin add https://github.com/apache/cordova-plugin-file-transfer.git
     phonegap plugin add https://github.com/MobileChromeApps/zip.git
     phonegap plugin add https://github.com/apache/cordova-plugin-inappbrowser.git
