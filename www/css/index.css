@@ -26,22 +26,6 @@
     margin: 0;
 }
 
-@viewport
-{
-    width:320px;
-}
-
-@-ms-viewport {
-    width:320px;
-    zoom-user:fixed;
-    max-zoom:1;
-    min-zoom:1;
-}
-
-body, html { 
-    -ms-overflow-style: none !important; 
-}
-
 html, body,
 #momo-main,
 .momo-page,
