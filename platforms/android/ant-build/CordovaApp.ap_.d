@@ -54,11 +54,13 @@
 /home/ghis/Workspace/momo2/platforms/android/assets/www/cordova.js \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/img \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/css \
+/home/ghis/Workspace/momo2/platforms/android/assets/www/assets.zip \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/spec \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/assets \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/index.json \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/cordova_plugins.js \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/spec.html \
+/home/ghis/Workspace/momo2/platforms/android/assets/www/config.xml \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/res \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/fonts \
 /home/ghis/Workspace/momo2/platforms/android/assets/www/js/tmpl.min.js \
