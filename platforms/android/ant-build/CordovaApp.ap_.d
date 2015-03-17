@@ -15,7 +15,6 @@
 /home/ghis/Workspace/momo2/platforms/android/res/drawable-land-xhdpi/screen.png \
 /home/ghis/Workspace/momo2/platforms/android/res/drawable-xxhdpi/ic_action_remove.png \
 /home/ghis/Workspace/momo2/platforms/android/res/drawable-xxhdpi/ic_action_next_item.png \
-/home/ghis/Workspace/momo2/platforms/android/res/drawable-xxhdpi/icon.png \
 /home/ghis/Workspace/momo2/platforms/android/res/drawable-xxhdpi/ic_action_previous_item.png \
 /home/ghis/Workspace/momo2/platforms/android/res/drawable-port-hdpi/screen.png \
 /home/ghis/Workspace/momo2/platforms/android/res/values/strings.xml \
@@ -39,7 +38,6 @@
 /home/ghis/Workspace/momo2/platforms/android/ant-build/res/drawable-land-xhdpi/screen.png \
 /home/ghis/Workspace/momo2/platforms/android/ant-build/res/drawable-xxhdpi/ic_action_remove.png \
 /home/ghis/Workspace/momo2/platforms/android/ant-build/res/drawable-xxhdpi/ic_action_next_item.png \
-/home/ghis/Workspace/momo2/platforms/android/ant-build/res/drawable-xxhdpi/icon.png \
 /home/ghis/Workspace/momo2/platforms/android/ant-build/res/drawable-xxhdpi/ic_action_previous_item.png \
 /home/ghis/Workspace/momo2/platforms/android/ant-build/res/drawable-port-hdpi/screen.png \
 /home/ghis/Workspace/momo2/platforms/android/ant-build/res/drawable-mdpi/ic_action_remove.png \
