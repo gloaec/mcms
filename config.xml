@@ -25,7 +25,6 @@
     <preference name="android-installLocation" value="auto" />
     <gap:plugin name="org.apache.cordova.file" />
     <gap:plugin name="org.apache.cordova.file-transfer" />
-    <gap:plugin name="org.apache.cordova.inappbrowser" />
     <gap:plugin name="org.chromium.zip" />
     <icon src="icon.png" />
     <icon gap:platform="android" gap:qualifier="ldpi" src="www/res/icon/android/icon-36-ldpi.png" />
