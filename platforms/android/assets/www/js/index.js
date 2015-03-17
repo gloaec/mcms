@@ -20,11 +20,18 @@
 // Constants
 var DEBUG = false;
 var DEBUG_WWW_URL = 'http://localhost/~ghis/momo/www/';
-var ANIMATION_ENABLED = false;
+var ANIMATION_ENABLED = true;
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
 var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
 var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
+
+// FastClick Patch
+if ('addEventListener' in document) {
+    document.addEventListener('DOMContentLoaded', function() {
+        FastClick.attach(document.body);
+    }, false);
+}
 
 // Application
 var app = {
@@ -59,6 +66,9 @@ var app = {
     // Application events
     bindEvents: function() {
 
+        // Navigation Handler
+        window.addEventListener('hashchange', this.onHashChange, false);
+
         // Device Handler
         window.isphone = false;
         if(document.URL.indexOf("http://") === -1 
@@ -77,19 +87,7 @@ var app = {
 
     // Device ready callback
     onDeviceReady: function() {
-        // FastClick Patch
-        FastClick.attach(document.body);
-
-        // Load Manifest
         app.loadManifest();
-
-        // Navigation Handler
-        document.addEventListener('touchend', function(){
-           location.hash = this.href.match(/(^.*)\./)[1];
-           alert("touch : "+location.hash);
-           return false;
-        }, false);
-        window.addEventListener('hashchange', this.onHashChange, false);
     },
 
     // JSON Manifest loading function
@@ -407,16 +405,15 @@ var app = {
             return false;
         }
 
+        app.isAnimating = true;
+
         var $outpage = document.getElementById(app.current_page);
         var $inpage  = document.getElementById(page);
 
         if(!ANIMATION_ENABLED){
-            $inpage.innerHTML = app.renderPage(page_obj);
             $inpage.classList.add('momo-page-current');
             $outpage.classList.remove('momo-page-current');
         } else {
-
-            app.isAnimating = true;
 
             var outCb = function(){
                 $outpage.removeEventListener('animationend',       outCb);
@@ -482,7 +479,6 @@ var app = {
     onHashChange: function(e) {
         var hash = window.location.hash, length = window.history.length;
         var page = window.location.hash.slice(1);
-        alert("Change: "+hash);
 
         if(!app.pages.hasOwnProperty(page)){
             page = 'home';
