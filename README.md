@@ -4,7 +4,7 @@ Momo is a template based on Cordova/Phonegap that aims to easily design some
 cross-platform applications. The whole application content is described in a
 JSON manifest and It implements its own self-update mecanisms.
 
-## Debug Package
+## Debug Package
 
 Scan the following QRCode to install the debug version of the package :
 
