@@ -141,10 +141,12 @@
             <footer class="momo-footer">
                 <div class="container-fluid clearfix">
                     <p class="navbar-text pull-left">
-                        <a href="https://dev.entrouvert.org/projects/momo/" target="_system">Momo repository</a>
+                        <a href="https://dev.entrouvert.org/projects/momo/"
+                            target="_system"
+                            onclick="javascript:app.utils.onExternalLinkClick()">Momo repository</a>
                     </p>
                     <p class="navbar-text pull-right">
-                        <a href="mailto:{%= o.contact %}" class="momo-contact">{%= o.meta.contact %}</a>
+                        <a href="mailto:{%= o.meta.contact %}" class="momo-contact">{%= o.meta.contact %}</a>
                     </p>
                 </div>
             </footer>

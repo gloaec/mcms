@@ -26,12 +26,12 @@ var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
 var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
 
-// FastClick Patch
-if ('addEventListener' in document) {
-    document.addEventListener('DOMContentLoaded', function() {
-        FastClick.attach(document.body);
-    }, false);
-}
+// FastClick Patch (Moved to OnDeviceReady)
+//if ('addEventListener' in document) {
+//    document.addEventListener('DOMContentLoaded', function() {
+//        FastClick.attach(document.body);
+//    }, false);
+//}
 
 // Application
 var app = {
@@ -88,6 +88,7 @@ var app = {
     // Device ready callback
     onDeviceReady: function() {
         app.loadManifest();
+        FastClick.attach(document.body);
     },
 
     // JSON Manifest loading function
@@ -390,10 +391,7 @@ var app = {
             return false;
         } else
         if(page_obj.external){
-            if(navigator.app) // Android
-                navigator.app.loadUrl(encodeURI(page_obj.url), { openExternal:true });
-            else // iOS and others
-                window.open(encodeURI(page_obj.url), "_system", 'location=yes'); // opens in the app, not in safari
+            app.utils.openExternalURL(page_obj.url);
             return false;
         }
 
@@ -475,6 +473,15 @@ var app = {
         app.isAnimating = false;
     },
 
+    onTouchStart: function(e) {
+        e = e || window.event;
+        var targ = e.target || e.srcElement;
+        if (targ.nodeType == 3) targ = targ.parentNode;
+console.log("touch");
+console.log(targ.getAttribute('href'));
+        //return targ.onclick();
+    },
+
     // Location Hash change event
     onHashChange: function(e) {
         var hash = window.location.hash, length = window.history.length;
@@ -505,6 +512,23 @@ var app = {
 
     // Various Javascript Helpers
     utils: {
+
+        onExternalLinkClick: function(e){
+            e = e || window.event;
+            var targ = e.target || e.srcElement;
+            if (targ.nodeType == 3) targ = targ.parentNode;
+            var url = targ.getAttribute("href");
+            app.utils.openExternalURL(url);
+            return false;
+        },
+
+        openExternalURL: function(url){
+            if(navigator.app) // Android
+                navigator.app.loadUrl(encodeURI(url), { openExternal:true });
+            else // iOS and others
+                window.open(encodeURI(url), "_system", 'location=yes'); // opens in the app, not in safari
+            return false;
+        },
 
         extend: function ( defaults, options ) {
             var extended = {};
