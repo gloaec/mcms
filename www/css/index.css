@@ -53,11 +53,19 @@ body {
     display: table;
 }
 
+.navbar .nav>li>a,
+.navbar .nav>li>a>i.fa {
+    line-height: 20px !important;
+}
 .momo-loading {
     display: table-cell;
     vertical-align: middle; 
     text-align: center;
     padding-bottom: 60px;
+}
+
+.momo-loading-text {
+    padding: 20px;
 }
 
 .momo-page {
@@ -75,19 +83,22 @@ body {
     overflow: hidden;
 }
 .momo-frame-wrapper {
-    height: 100% !important;
+    /*height: 100% !important;*/
 }
 .momo-page-wrapper:after {
     content: " ";
     display: block;
 }
 .momo-footer,
+.momo-frame-wrapper:after,
 .momo-page-wrapper:after {
     height: 60px;
+    clear: both;
 }
 .momo-footer {
     position: relative;
     z-index: 999;
+    margin-bottom: 0;
 }
 .momo-subnavbar {
     margin-top: 1px;
@@ -116,7 +127,14 @@ body {
 .momo-page iframe {
     width: 100%;
     border: 0;
-    min-height: 80%;
+    min-height: 100%;
+    z-index: 1;
+    position: relative;
+}
+.momo-page iframe {
+    width: 100%;
+    border: 0;
+    min-height: 100%;
     z-index: 1;
     position: relative;
 }
@@ -162,11 +180,14 @@ body {
 .momo-page-ontop {
     z-index: 999;
 }
+.navbar {
+    border: 0;
+}
 .navbar .col-xs-8 {
     display: table;
 }
-.navbar .col-xs-8 .navbar-brand {
-    padding: 10px 15px;
+.navbar .navbar-brand {
+    padding: 10px 7px;
     float: none;
     display: table-cell;
     vertical-align: middle;
@@ -174,8 +195,33 @@ body {
     line-height: 18px;
 }
 
-.navbar .col-xs-2.navbar-btn {
+.navbar .navbar-btn {
     padding: 0 7px;
+}
+
+.btn {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.no-gutter > [class*='col-'] {
+    padding-right:0;
+    padding-left:0;
+}
+.container.small-gutters,
+.container-fluid.small-gutters,
+.small-gutters > [class*='col-'] {
+    padding-right:7px;
+    padding-left:7px;
+    padding-bottom: 14px;
+}
+.container.tiny-gutters,
+.container-fluid.tiny-gutters {
+    padding:12px;
+}
+.tiny-gutters > [class*='col-'] {
+    padding-right:2px;
+    padding-left:2px;
+    padding-bottom: 4px;
 }
 
 /* Landscape layout (with min-width) */

@@ -18,7 +18,7 @@
  */
 
 // Constants
-var DEBUG = false;
+var DEBUG = true;
 var DEBUG_WWW_URL = 'http://localhost/~ghis/momo/www/';
 var ANIMATION_ENABLED = true;
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
@@ -26,15 +26,11 @@ var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
 var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
 
-// FastClick Patch (Moved to OnDeviceReady)
-//if ('addEventListener' in document) {
-//    document.addEventListener('DOMContentLoaded', function() {
-//        FastClick.attach(document.body);
-//    }, false);
-//}
-
 // Application
 var app = {
+
+    // Menu Registry
+    menu: [],
 
     // Pages Registry
     pages: {},
@@ -93,7 +89,8 @@ var app = {
 
     // JSON Manifest loading function
     loadManifest: function(){
-        if(DEBUG) alert('load '+JSON.stringify(app.manifest));
+        if(DEBUG) console.log('load '+JSON.stringify(app.manifest));
+        app.utils.setLoadingMsg("Chargement de l'application");
 
         var updateRequired = true;
 
@@ -113,7 +110,7 @@ var app = {
         updateRequired   = timeDiff > app.manifest.meta.updateFreq;
 
         // Start Application Return if no need for update
-        if(!updateRequired){
+        if(!updateRequired && !DEBUG){
             app.start();
             return;
         }
@@ -140,7 +137,7 @@ var app = {
                         // Store manifest if parsable
                         localStorage.setItem("momo-manifest", manifestResponse);
                     } catch(e) {
-                        if(DEBUG) alert('Cannot parse application manifest '+url);
+                        if(DEBUG) console.log('Cannot parse application manifest '+url);
                     }
 
                     // Reload if new manifest url
@@ -174,7 +171,7 @@ var app = {
 
     // Start Application with safe manifest
     onAjaxError: function(url, request){
-        if(DEBUG) alert("Cannot load "+url+" [Error "+(request ? request.status : 'Unknown')+"]. Loading local manifest instead.");
+        if(DEBUG) console.log("Cannot load "+url+" [Error "+(request ? request.status : 'Unknown')+"]. Loading local manifest instead.");
 
         // Store proper manifest
         localStorage.setItem("momo-manifest", JSON.stringify(app.safeManifest));
@@ -212,7 +209,8 @@ var app = {
     // Get distant zip asset archive and update local cache
     fetchAssets: function(cb){
 
-        if(DEBUG) alert('fetch assets');
+        if(DEBUG) console.log('fetch assets');
+        app.utils.setLoadingMsg("Téléchargement de la mise à jour");
 
         if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
             window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
@@ -230,17 +228,18 @@ var app = {
                     filePath, 
                     // Success callback 
                     function(entry) {
+                        app.utils.setLoadingMsg("Extraction de la mise à jour");
                         // Unzip Assets
                         zip.unzip(filePath, rootPath, function(){
-                            if(DEBUG) alert('unzip success');
+                            if(DEBUG) console.log('unzip success');
                             cb();
                         });
                     },
                     // Error callback
                     function(error) {
-                        if(DEBUG) alert("download error source " + error.source);
-                        if(DEBUG) alert("download error target " + error.target);
-                        if(DEBUG) alert("upload error code" + error.code);
+                        if(DEBUG) console.log("download error source " + error.source);
+                        if(DEBUG) console.log("download error target " + error.target);
+                        if(DEBUG) console.log("upload error code" + error.code);
                         cb();
                     },
                     // Misc
@@ -250,11 +249,11 @@ var app = {
                     }
                 );
             }, function(error){ 
-                if(DEBUG) alert('Filesystem error');
+                if(DEBUG) console.error('Filesystem error');
                 cb();
             });
         } else {
-            if(DEBUG) alert('Plugins "zip" & "file-transfer" not available (local mode ?)');
+            if(DEBUG) console.error('Plugins "zip" & "file-transfer" not available (local mode ?)');
             cb();
         }
     },
@@ -292,7 +291,8 @@ var app = {
 
     // Application starter
     start: function(){
-        if(DEBUG) alert('start '+JSON.stringify(app.manifest));
+        if(DEBUG) console.log('start '+JSON.stringify(app.manifest));
+        app.utils.setLoadingMsg("Démarrage de l'application");
 
         // Default route to home
         app.manifest.id = app.current_page = 'home';
@@ -326,6 +326,14 @@ var app = {
             // Register page
             app.pages[data.id] = data;
 
+            // Register menu items
+            if(data.menu instanceof Array){
+                for(var i = 0; i < data.menu.length; i++){
+                    var page = data.menu[i];
+                    app.menu[i] = app.registerPage(page, false);
+                }
+            }
+
             // Register page childrens
             if(data.pages instanceof Array){
                 for(var i = 0; i < data.pages.length; i++){
@@ -356,6 +364,31 @@ var app = {
         var $main  = tmpl("momo-main-tmpl", data);
         document.getElementById('momo-main').innerHTML = $main;
 
+        // Render every menu items
+        for(var i in app.menu){
+            var $menuItem = document.createElement('li');
+            var data = app.utils.extend(app.pages[app.menu[i]], { header: true });
+            $menuItem.innerHTML = tmpl("momo-list-item-tmpl", data);
+            document.getElementById('momo-menu').appendChild($menuItem);
+        }
+
+        // Render navigation
+        var nav = responsiveNav(".momo-nav-collapse", { // Selector
+            animate: true, // Boolean: Use CSS3 transitions, true or false
+            transition: 284, // Integer: Speed of the transition, in milliseconds
+            //label: "Menu", // String: Label for the navigation toggle
+            //insert: "before", // String: Insert the toggle before or after the navigation
+            customToggle: "momo-menu-toggle", // Selector: Specify the ID of a custom toggle
+            closeOnNavClick: true, // Boolean: Close the navigation when one of the links are clicked
+            openPos: "relative", // String: Position of the opened nav, relative or static
+            navClass: "nav-collapse", // String: Default CSS class. If changed, you need to edit the CSS too!
+            navActiveClass: "active", // String: Class that is added to <html> element when nav is active
+            jsClass: "js", // String: 'JS enabled' class which is added to <html> element
+            init: function(){}, // Function: Init callback
+            open: function(){}, // Function: Open callback
+            close: function(){} // Function: Close callback
+        });
+
         // Render every page
         for(var page in app.pages){
             //app.renderPage(app.pages[page]);
@@ -373,11 +406,42 @@ var app = {
     // Render Page
     renderPage: function(page){
         if(page instanceof Object){
-            if(DEBUG) alert('render page '+JSON.stringify(page));
-            return tmpl("momo-page-tmpl", app.utils.extend(page, {meta: app.manifest.meta}));
+            if(DEBUG) console.log('render page '+JSON.stringify(page));
+
+            // Get data to display
+            var data = app.utils.extend(page, {meta: app.manifest.meta});
+
+            // Change page header
+            document.getElementById("momo-header").innerHTML = tmpl("momo-header-tmpl", data);
+
+            // Change page title
+            //var elements = document.getElementsByClassName("momo-title");
+            //for (var i = 0; i < elements.length; i++)
+            //    elements[i].innerHTML = data.title;
+
+            //// Change page icon
+            //var elements = document.getElementsByClassName("momo-icon");
+            //data.icon = data.icon || data.meta.icon;
+            //var $icon = document.createElement('img');
+            //$icon.height = 20; 
+            //$icon.width = 20;
+            //$icon.src = data.icon;
+            //for (var i = 0; i < elements.length; i++)
+            //    elements[i].innerHTML = data.title;
+
+            //// Display ot not back btn
+            //var elements = document.getElementsByClassName("momo-back-btn");
+            //for (var i = 0; i < elements.length; i++)
+            //    if(data.id == 'home')
+            //        elements[i].classList.add('hidden');
+            //    else
+            //        elements[i].classList.remove('hidden');
+
+            // Render Page
+            return tmpl("momo-page-tmpl", data);
         } else
         if(typeof page === 'string' || page instanceof String || page instanceof Number){
-            if(DEBUG) alert('render page '+page);
+            if(DEBUG) console.log('render page '+page);
             return app.renderPage(app.pages[page]);
         }
     },
@@ -391,7 +455,7 @@ var app = {
             return false;
         } else
         if(page_obj.external){
-            app.utils.openExternalURL(page_obj.url);
+            app.utils.openExternalURL(page_obj.url, page_obj.inAppBrowser);
             return false;
         }
 
@@ -477,8 +541,6 @@ var app = {
         e = e || window.event;
         var targ = e.target || e.srcElement;
         if (targ.nodeType == 3) targ = targ.parentNode;
-console.log("touch");
-console.log(targ.getAttribute('href'));
         //return targ.onclick();
     },
 
@@ -513,6 +575,12 @@ console.log(targ.getAttribute('href'));
     // Various Javascript Helpers
     utils: {
 
+        setLoadingMsg: function(text){
+            var elements = document.getElementsByClassName("momo-loading-text");
+            for (var i = 0; i < elements.length; i++)
+                elements[i].innerHTML = text;
+        },
+
         onExternalLinkClick: function(e){
             e = e || window.event;
             var targ = e.target || e.srcElement;
@@ -522,11 +590,15 @@ console.log(targ.getAttribute('href'));
             return false;
         },
 
-        openExternalURL: function(url){
-            if(navigator.app) // Android
-                navigator.app.loadUrl(encodeURI(url), { openExternal:true });
-            else // iOS and others
-                window.open(encodeURI(url), "_system", 'location=yes'); // opens in the app, not in safari
+        openExternalURL: function(url, inAppBrowser){
+            if(inAppBrowser){
+                cordova.InAppBrowser.open(url);
+            } else {
+                if(navigator.app) // Android
+                    navigator.app.loadUrl(encodeURI(url), { openExternal:true });
+                else // iOS and others
+                    window.open(encodeURI(url), "_system", 'location=yes'); // opens in the app, not in safari
+            }
             return false;
         },
 
@@ -606,3 +678,14 @@ console.log(targ.getAttribute('href'));
         }
     }
 };
+
+if (typeof String.prototype.startsWith != 'function') {
+  String.prototype.startsWith = function (str){
+    return this.slice(0, str.length) == str;
+  };
+}
+if (typeof String.prototype.endsWith != 'function') {
+  String.prototype.endsWith = function (str){
+    return this.slice(-str.length) == str;
+  };
+}
