@@ -209,7 +209,7 @@ var app = {
                 var rootPath = fileSystem.root.toURL();
 
                 // Patch path to local in manifest response
-                var manifestResponse = response.replace(/(['"\(])\/?(assets\/^['"\)]*)(['"\)])/g, function(match, q1, path, q2){
+                var manifestResponse = response.replace(/(['"\(])\/?(assets\/[^'"\)]*)(['"\)])/g, function(match, q1, path, q2){
                     return q1+rootPath+match+q2;
                 });
 
@@ -218,7 +218,7 @@ var app = {
 
             });
         } else {
-            var manifestResponse = response.replace(/(['"\(])\/?(assets\/^['"\)]*)(['"\)])/g, function(match, q1, path, q2){
+            var manifestResponse = response.replace(/(['"\(])\/?(assets\/[^'"\)]*)(['"\)])/g, function(match, q1, path, q2){
                 return q1+rootPath+match+q2;
             });
             cb(manifestResponse);
