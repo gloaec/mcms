@@ -317,6 +317,7 @@ var app = {
         app.manifest.id = app.current_page = 'home';
         
         // Dev page refresh : redirect to home
+        window.location.replace('#');
         window.location.hash = '#home'
 
         // Import Scripts & Styles
@@ -481,6 +482,9 @@ var app = {
         var $outpage = document.getElementById(app.current_page);
         var $inpage  = document.getElementById(page);
 
+        // Render page (with small hack, so it doesn't mess up the display)
+        $inpage.innerHTML = app.renderPage(page_obj);
+
         if(!ANIMATION_ENABLED){
             $inpage.classList.add('momo-page-current');
             $outpage.classList.remove('momo-page-current');
@@ -517,7 +521,6 @@ var app = {
             $outpage.addEventListener('MSAnimationEnd',     outCb, false);
 
             $inpage.classList.add('momo-page-current');
-            $inpage.innerHTML = app.renderPage(page_obj);
 
             var in_classes = (back ? ANIMATION_BACK_IN_CLASS : ANIMATION_IN_CLASS).split(' ');
             for(var i = 0; i < in_classes.length; i++)
