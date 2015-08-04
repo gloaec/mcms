@@ -83,8 +83,23 @@ var app = {
 
     // Device ready callback
     onDeviceReady: function() {
+        app.initIndex();
         app.loadManifest();
         FastClick.attach(document.body);
+    },
+
+    // Initialize search engine index
+    initIndex: function(){
+        app.index = lunr(function () {
+            this.use(lunr.fr);
+            this.field('title', {boost: 10})
+            this.field('body')
+            this.ref('id')
+            this.pipeline.add(function (token, tokenIndex, tokens) {
+                if(token.length > 2)
+                    return app.utils.replaceAccents(token);
+            });
+        });
     },
 
     // JSON Manifest loading function
@@ -296,6 +311,9 @@ var app = {
 
         // Default route to home
         app.manifest.id = app.current_page = 'home';
+        
+        // Dev page refresh : redirect to home
+        window.location.hash = '#home'
 
         // Import Scripts & Styles
         app.appendAssets(function(){ 
@@ -306,6 +324,9 @@ var app = {
             // Render Homepage
             app.render(app.manifest);
 
+            // Listen for search form submission
+            var $form = document.getElementById('momo-search');
+            $form.addEventListener('submit', app.onSearchSubmit, false);
         });
     },
 
@@ -349,6 +370,13 @@ var app = {
                     app.pages[data.id].seealso[i] = app.registerPage(page, false);
                 }
             }
+
+            // Index page for search engine
+            app.index.add({
+                id: data.id,
+                title: data.title,
+                body: data.content
+            });
             
             return data.id;
         } else
@@ -373,7 +401,7 @@ var app = {
         }
 
         // Render navigation
-        var nav = responsiveNav(".momo-nav-collapse", { // Selector
+        app.nav = responsiveNav(".momo-nav-collapse", { // Selector
             animate: true, // Boolean: Use CSS3 transitions, true or false
             transition: 284, // Integer: Speed of the transition, in milliseconds
             //label: "Menu", // String: Label for the navigation toggle
@@ -413,29 +441,6 @@ var app = {
 
             // Change page header
             document.getElementById("momo-header").innerHTML = tmpl("momo-header-tmpl", data);
-
-            // Change page title
-            //var elements = document.getElementsByClassName("momo-title");
-            //for (var i = 0; i < elements.length; i++)
-            //    elements[i].innerHTML = data.title;
-
-            //// Change page icon
-            //var elements = document.getElementsByClassName("momo-icon");
-            //data.icon = data.icon || data.meta.icon;
-            //var $icon = document.createElement('img');
-            //$icon.height = 20; 
-            //$icon.width = 20;
-            //$icon.src = data.icon;
-            //for (var i = 0; i < elements.length; i++)
-            //    elements[i].innerHTML = data.title;
-
-            //// Display ot not back btn
-            //var elements = document.getElementsByClassName("momo-back-btn");
-            //for (var i = 0; i < elements.length; i++)
-            //    if(data.id == 'home')
-            //        elements[i].classList.add('hidden');
-            //    else
-            //        elements[i].classList.remove('hidden');
 
             // Render Page
             return tmpl("momo-page-tmpl", data);
@@ -570,6 +575,52 @@ var app = {
         if(app.current_page != page){
             app.navigate(page, back);
         }
+    },
+
+    onSearchSubmit: function(e){
+        // Stop form default action
+        e.preventDefault();
+        //e.stopPropagation();
+
+        // Get search input
+        var $searchInput = document.getElementById('momo-search-input');
+        var searchInput = app.utils.replaceAccents($searchInput.value);
+        var id = "search-"+app.utils.hyphenate(searchInput);
+
+        // Close navigation + Keyboard
+        app.nav.close();
+        $searchInput.value = '';
+        $searchInput.blur();
+
+        // If search query doesn't exist
+        if(!document.getElementById(id)){
+
+            // Get search results
+            var results = app.index.search(searchInput);
+
+            // Register new search results page
+            app.pages[id] = {
+                id: id,
+                icon: "fa fa-search",
+                title: 'Recherche "'+searchInput+'"',
+                content: results.length ? null : '<div class="well text-center text-muted">Aucun resultat</div>',
+                pages: results.map(function(item){
+                    return item.ref;
+                })
+            };
+
+            // Generate result page view
+            var $page = document.createElement('div');
+            $page.id = id
+            $page.className = "momo-page";
+            $page.innerHTML = app.renderPage(app.pages[id]);
+            document.getElementById('momo-pages').appendChild($page);
+        }
+
+        // Navigate to search result page
+        window.location.hash = "#"+id;
+
+        return false;
     },
 
     // Various Javascript Helpers
