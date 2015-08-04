@@ -209,14 +209,18 @@ var app = {
                 var rootPath = fileSystem.root.toURL();
 
                 // Patch path to local in manifest response
-                var manifestResponse = response.replace(/assets\//g, rootPath+'assets/');
+                var manifestResponse = response.replace(/(['"\(])\/?(assets\/^['"\)]*)(['"\)])/g, function(match, q1, path, q2){
+                    return q1+rootPath+match+q2;
+                });
 
                 // Callback
                 cb(manifestResponse);
 
             });
         } else {
-            var manifestResponse = response.replace(/assets\//g, DEBUG_WWW_URL+'assets/');
+            var manifestResponse = response.replace(/(['"\(])\/?(assets\/^['"\)]*)(['"\)])/g, function(match, q1, path, q2){
+                return q1+rootPath+match+q2;
+            });
             cb(manifestResponse);
         }
     },
