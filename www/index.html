@@ -32,31 +32,88 @@
         <meta name="format-detection" content="telephone=no" />
         <meta name="msapplication-tap-highlight" content="no" />
         <link rel="stylesheet" type="text/css" href="css/index.css" />
+        <link rel="stylesheet" href="css/responsive-nav.css">
         <title class="momo-title">Loading</title>
     </head>
     <body>
 
         <div id="momo-main">
-            <div class="momo-loading">
-                <i class="fa fa-spinner fa-pulse fa-5x"></i>
+            <div class="momo-loading text-muted">
+                <i class="fa fa-spinner fa-pulse fa-3x"></i>
+                <p class="momo-loading-text">
+                  Initialisation de l'application
+                </p>
             </div>
         </div>
+
+        <script type="text/x-tmpl" id="momo-icon-tmpl">
+            {% if(o.icon.startsWith('http://') ||
+                  o.icon.startsWith('https://') ||
+                  o.icon.startsWith('file://') ||
+                  o.icon.endsWith('.png') ||
+                  o.icon.endsWith('.svg') ||
+                  o.icon.endsWith('.ico') ||
+                  o.icon.endsWith('.jpeg') ||
+                  o.icon.endsWith('.jpg')){ %}
+                <img src="{%= o.icon %}" height="{%= o.size %}" width="{%= o.size %}" />
+            {% } else { %}
+                <i class="fa fa-fw {%= o.icon %} {% if(o.size > 20){ %} fa-3x {% } %}"></i>
+            {% } %}
+        </script>
+
+        <script type="text/x-tmpl" id="momo-header-tmpl">
+            <div class="navbar-btn pull-left">
+                {% if(o.id && o.id != 'home'){ %}
+                    <a href="#" class="btn btn-default pull-left momo-back-btn" onclick="window.history.back(); return false;">
+                        <span class="sr-only"> History back </span>
+                        <i class="fa fa-chevron-left"></i>
+                    </a>
+                {% } %}
+            </div>
+            <span class="navbar-brand" href="#home">
+                <span class="momo-icon">
+                    {% var icon = o.icon || o.meta.icon; %}
+                    {% if(icon){ %}
+                        {%# tmpl('momo-icon-tmpl', { icon: icon, size: 20, header: true }) %}
+                    {% } %}
+                </span>
+                <span class="momo-title">{%= o.title || o.meta.title %}</span>
+            </span>
+        </script>
 
         <!-- Main Template -->
         <script type="text/x-tmpl" id="momo-main-tmpl">
 
                 <!-- Navbar -->
-                <nav class="navbar navbar-default navbar-fixed-top momo-navbar">
-                    <div class="container-fluid">
-                        <div class="navbar-header">
-                            <a class="navbar-brand" href="#home">
-                                <span class="momo-icon">
-                                    <img src="{%= o.meta.icon %}" width="20" height="20"/>
-                                </span>
-                                <span class="momo-title">{%= o.meta.title %}</span>
-                            </a>
-                        </div>
+                <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+                  <div class="container-fluid">
+                    <div class="navbar-header momo-header">
+                      <div class="navbar-btn pull-right">
+                          <button id="momo-menu-toggle" type="button" class="btn btn-default pull-right nav-toggle">
+                              <i class="fa fa-bars fa-lg"></i>
+                          </button>
+                      </div>
+                      <div class="navbar-header" id="momo-header">
+                          {%# tmpl('momo-header-tmpl', o) %}
+                      </div>
                     </div>
+                    <div class="momo-nav-collapse">
+                      <form id="momo-search" class="navbar-form navbar-right" role="search">
+                        <div class="form-group">
+                          <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Rechercher">
+                            <div class="input-group-btn">
+                              <button type="submit" class="btn btn-success">
+                                <i class="fa fa-search"></i>
+                                <!--span class="visible-xs-inline">Rechercher</span-->
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </form>
+                      <ul id="momo-menu" class="nav navbar-nav navbar-left"></ul>
+                    </div>
+                  </div>
                 </nav>
 
                 <!-- Pages List -->
@@ -64,32 +121,38 @@
 
         </script>
 
+        <script type="text/x-tmpl" id="momo-list-item-tmpl">
+            <a href="#{%= o.id %}" class="{% if(!o.header){ %} list-group-item {% } %}">
+                {% if(o.icon){ %}
+                    {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
+                {% } %}
+                {%= o.title %}
+                {% if(o.external) { %}
+                    <i class="fa fa-external-link pull-right"></i>
+                {% } else { %}
+                    <i class="fa fa-angle-right pull-right"></i>
+                {% } %}
+            </a>
+        </script>
+
+        <script type="text/x-tmpl" id="momo-icon-item-tmpl">
+            <div class="col-xs-4 col-sm-3 col-md-2 col-lg-1">
+                <a href="#{%= o.id %}" class="btn btn-block text-center {%= o.className || 'btn-default' %}">
+                    {% if(o.icon){ %}
+                        <div style="height: 42px;">
+                            {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 42 }) %}
+                        </div>
+                    {% } %}
+                    {%= o.title %}
+                </a>
+            </div>
+        </script>
+
         <!-- Page Template -->
         <script type="text/x-tmpl" id="momo-page-tmpl">
 
-            <div class="{% if(o.url){ %}momo-frame-wrapper{% } else { %}momo-page-wrapper{% } %}">
+            <div class="{% if(o.url){ %}momo-frame-wrapper{% } else { %}momo-page-wrapper{% } %} clearfix">
         
-                <nav class="navbar navbar-inverse navbar-static-top momo-subnavbar">
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-xs-2 navbar-btn text-left">
-                                {% if(o.id != 'home'){ %}
-                                    <a href="#" class="btn btn-success pull-left" onclick="window.history.back(); return false;">
-                                        <i class="fa fa-chevron-left"></i>
-                                    </a>
-                                {% } %}
-                            </div>
-                            <div class="col-xs-8 text-center">
-                                <div class="navbar-brand text-center">
-                                    {%= o.title %}
-                                </div>
-                            </div>
-                            <div class="col-xs-2">
-                            </div>
-                        </div>
-                    </div>
-                </nav> 
-
                 <div class="container-fluid">
                     <section class="momo-page-content">{%# o.content %}</section>
                 </div>
@@ -99,36 +162,31 @@
                 {% } %}
        
                 {% if(o.pages){ %}
-                    <div class="list-group momo-page-pages">
-                        {% for (var i = 0; i < o.pages.length; i++) { %}
-                            <a href="#{%= o.pages[i] %}" class="list-group-item">
-                                {%= app.pages[o.pages[i]].title %}
-                                {% if(app.pages[o.pages[i]].external) { %}
-                                    <i class="fa fa-external-link pull-right"></i>
-                                {% } else { %}
-                                    <i class="fa fa-angle-right pull-right"></i>
-                                {% } %}
-                            </a>
-                        {% } %}
-                    </div>
+                    {% if(o.display == 'icons'){ %}
+                        <div class="container-fluid tiny-gutters momo-page-pages">
+                            {% for (var i = 0; i < o.pages.length; i++) { %}
+                                {%# tmpl("momo-icon-item-tmpl", app.pages[o.pages[i]]) %}
+                            {% } %}
+                        </div>
+                    {% } else { %}
+                        <div class="list-group momo-page-pages">
+                            {% for (var i = 0; i < o.pages.length; i++) { %}
+                                {%# tmpl("momo-list-item-tmpl", app.pages[o.pages[i]]) %}
+                            {% } %}
+                        </div>
+
+                    {% } %}
                 {% } %}
 
                 {% if(o.seealso){ %}
                     <div class="container-fluid">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                See Also
+                                Voir aussi
                             </div>
                             <div class="list-group momo-page-pages">
                                 {% for (var i = 0; i < o.seealso.length; i++) { %}
-                                    <a href="#{%= o.seealso[i] %}" class="list-group-item">
-                                        {%= app.pages[o.seealso[i]].title %}
-                                        {% if(app.pages[o.seealso[i]].external) { %}
-                                            <i class="fa fa-external-link pull-right"></i>
-                                        {% } else { %}
-                                            <i class="fa fa-angle-right pull-right"></i>
-                                        {% } %}
-                                    </a>
+                                    {%# tmpl("momo-list-item-tmpl", app.pages[o.seealso[i]]) %}
                                 {% } %}
                             </div>
                         </div>
@@ -138,16 +196,20 @@
             </div>
   
             <!-- Footer -->
-            <footer class="momo-footer">
+            <footer class="navbar navbar-inverse momo-footer">
                 <div class="container-fluid clearfix">
-                    <p class="navbar-text pull-left">
-                        <a href="https://dev.entrouvert.org/projects/momo/"
-                            target="_system"
-                            onclick="javascript:app.utils.onExternalLinkClick()">Momo repository</a>
-                    </p>
-                    <p class="navbar-text pull-right">
-                        <a href="mailto:{%= o.meta.contact %}" class="momo-contact">{%= o.meta.contact %}</a>
-                    </p>
+                    <div class="row">
+                        <div class="col-xs-6 navbar-btn text-left">
+                            <a href="https://dev.entrouvert.org/projects/momo/"
+                                class="btn btn-success pull-left momo-repo" 
+                                target="_system"
+                                onclick="javascript:app.utils.onExternalLinkClick()">Momo repository</a>
+                        </div>
+                        <div class="col-xs-6 navbar-btn text-right">
+                            <a href="mailto:{%= o.meta.contact %}" 
+                                class="btn btn-success pull-right momo-contact">{%= o.meta.contact %}</a>
+                        </div>
+                    </div>
                 </div>
             </footer>
 
@@ -157,6 +219,7 @@
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/tmpl.min.js"></script>
         <script type="text/javascript" src="js/fastclick.js"></script>
+        <script type="text/javascript" src="js/responsive-nav.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript">
             app.initialize();
