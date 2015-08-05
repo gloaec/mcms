@@ -132,7 +132,7 @@
         </script>
 
         <script type="text/x-tmpl" id="momo-icon-item-tmpl">
-            <div class="col-xs-4 col-sm-3 col-md-2 col-lg-1">
+            <div class="col-xs-{%= o.colxs %} col-sm-{%= o.colsm %} col-md-{%= o.colmd %} col-lg-{%= o.collg %}">
                 <a href="#{%= o.id %}" class="btn btn-block text-center {%= o.className || 'btn-default' %}">
                     {% if(o.icon){ %}
                         <div style="height: 42px;">

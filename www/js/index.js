@@ -45,6 +45,13 @@ var app = {
         }
     },
 
+    defaultPage: {
+        colxs: 4,
+        colsm: 3,
+        colmd: 2,
+        collg: 1
+    },
+
     // Misc Data
     current       : 0,
     isAnimating   : false,
@@ -318,7 +325,7 @@ var app = {
         
         // Dev page refresh : redirect to home
         window.location.replace('#');
-        window.location.hash = '#home'
+        window.location.hash = '#home';
 
         // Import Scripts & Styles
         app.appendAssets(function(){ 
@@ -340,6 +347,9 @@ var app = {
 
         if(data instanceof Object){
 
+            // Extends default page
+            data = app.utils.extend(app.defaultPage, data);
+
             // Generate a page ID
             var id = data.id = data.id ? data.id : (data.title ? app.utils.hyphenate(data.title) : '_' + Math.random().toString(36).substr(2, 9));
 
@@ -357,6 +367,14 @@ var app = {
                 for(var i = 0; i < data.menu.length; i++){
                     var page = data.menu[i];
                     app.menu[i] = app.registerPage(page, false);
+                }
+            }
+
+            // Register hidden pages childrens
+            if(data._pages instanceof Array){
+                for(var i = 0; i < data._pages.length; i++){
+                    var page = data._pages[i];
+                    app.pages[data.id]._pages[i] = app.registerPage(page, false);
                 }
             }
 
@@ -424,13 +442,13 @@ var app = {
 
         // Render every page
         for(var page in app.pages){
-            //app.renderPage(app.pages[page]);
             var $page = document.createElement('div');
             $page.id = app.pages[page].id;
             $page.className = "momo-page";
             if($page.id == 'home'){
                 $page.classList.add('momo-page-current');
                 $page.innerHTML = app.renderPage(app.pages[page]);
+                document.title = app.pages[page].title;
             }
             document.getElementById('momo-pages').appendChild($page);
         }
@@ -478,6 +496,7 @@ var app = {
         }
 
         app.isAnimating = true;
+        document.title = page_obj.title;
 
         var $outpage = document.getElementById(app.current_page);
         var $inpage  = document.getElementById(page);
