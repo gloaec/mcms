@@ -45,6 +45,7 @@ var app = {
         }
     },
 
+    // Default page attributes
     defaultPage: {
         colxs: 4,
         colsm: 3,
@@ -99,9 +100,10 @@ var app = {
     initIndex: function(){
         app.index = lunr(function () {
             this.use(lunr.fr);
-            this.field('title', {boost: 10})
-            this.field('body')
-            this.ref('id')
+            this.field('title', {boost: 10});
+            this.field('keywords', {boost: 5});
+            this.field('content');
+            this.ref('id');
             this.pipeline.add(function (token, tokenIndex, tokens) {
                 if(token.length > 2)
                     return app.utils.replaceAccents(token);
@@ -110,11 +112,13 @@ var app = {
     },
 
     // JSON Manifest loading function
-    loadManifest: function(){
+    loadManifest: function(start, cb){
         if(DEBUG) console.log('load '+JSON.stringify(app.manifest));
         app.utils.setLoadingMsg("Chargement de l'application");
 
         var updateRequired = true;
+        if(typeof start === "undefined")
+            start = true;
 
         // In case the url is incorrect, we get the backup manifest
         app.safeManifest = app.manifest;
@@ -133,7 +137,10 @@ var app = {
 
         // Start Application Return if no need for update
         if(!updateRequired && !DEBUG){
-            app.start();
+            if(start)
+                app.start();
+            if(typeof cb === "function")
+                cb();
             return;
         }
 
@@ -164,15 +171,21 @@ var app = {
 
                     // Reload if new manifest url
                     if(url != app.manifest.meta.updateUrl){
-                        app.loadManifest();
+                        app.loadManifest(start, cb);
                     // Otherwise fetch assets and start application
                     } else if(updateRequired) {
                         app.fetchAssets(function(){
-                            app.start();
+                            if(start)
+                                app.start();
+                            if(typeof cb === "function")
+                                cb();
                         });
                     // Start application with no udpates
                     } else {
-                        app.start();
+                        if(start)
+                            app.start();
+                        if(typeof cb === "function")
+                            cb();
                     }
                 });
 
@@ -324,22 +337,23 @@ var app = {
         app.manifest.id = app.current_page = 'home';
         
         // Dev page refresh : redirect to home
-        window.location.replace('#');
-        window.location.hash = '#home';
+        window.location.replace('#home');
 
-        // Import Scripts & Styles
-        app.appendAssets(function(){ 
-
-            // Regiter pages tree
-            app.registerPage(app.manifest);
+        // Regiter pages tree
+        app.registerPage(app.manifest);
     
-            // Render Homepage
-            app.render(app.manifest);
+        // Render Homepage
+        app.render(app.manifest);
+        app.navigate('home', false, function(){
+            // Import Scripts & Styles
+            app.appendAssets(function(){ 
 
-            // Listen for search form submission
-            var $form = document.getElementById('momo-search');
-            $form.addEventListener('submit', app.onSearchSubmit, false);
+            });
         });
+
+        // Listen for search form submission
+        var $form = document.getElementById('momo-search');
+        $form.addEventListener('submit', app.onSearchSubmit, false);
     },
 
     // Recursive function to index page from JSON Manifest
@@ -445,13 +459,14 @@ var app = {
             var $page = document.createElement('div');
             $page.id = app.pages[page].id;
             $page.className = "momo-page";
-            if($page.id == 'home'){
-                $page.classList.add('momo-page-current');
-                $page.innerHTML = app.renderPage(app.pages[page]);
-                document.title = app.pages[page].title;
-            }
+            //if($page.id == 'home'){
+            //    $page.classList.add('momo-page-current');
+            //    $page.innerHTML = app.renderPage(app.pages[page]);
+            //    document.title = app.pages[page].title;
+            //}
             document.getElementById('momo-pages').appendChild($page);
         }
+
     },
 
     // Render Page
@@ -475,7 +490,7 @@ var app = {
     },
 
     // Navigate to page
-    navigate: function(page, back){
+    navigate: function(page, back, cb){
         var page_obj = app.pages[page];
 
         if(page_obj.external && back){
@@ -490,7 +505,7 @@ var app = {
         // Keep try to navigate until previous animation is done.
         if(app.isAnimating) {
             setTimeout(function(){
-                app.navigate(page, back);
+                app.navigate(page, back, cb);
             }, 100);
             return false;
         }
@@ -504,9 +519,44 @@ var app = {
         // Render page (with small hack, so it doesn't mess up the display)
         $inpage.innerHTML = app.renderPage(page_obj);
 
-        if(!ANIMATION_ENABLED){
+        // Pull to update binder
+        WebPullToRefresh.init( {
+            loadingFunction: function(){
+                return new Promise( function( resolve, reject ) {
+                    // Run some async loading code here
+                    //window.location.reload();
+                    app.loadManifest(false, function(){
+                        // Regiter pages tree
+                        app.pages = [];
+                        app.menu = [];
+                        app.manifest.id = 'home';
+                        app.registerPage(app.manifest);
+                        // Render every page
+                        for(var page in app.pages){
+                            var $page = document.createElement('div');
+                            $page.id = app.pages[page].id;
+                            $page.className = "momo-page";
+                            document.getElementById('momo-pages').appendChild($page);
+                        }
+    
+                        // Render Homepage
+                        //app.render(app.manifest);
+                        resolve();
+                        if(app.current_page.startsWith('search-')){
+                            app.search(app.current_query);
+                        } else {
+                            app.navigate(app.current_page);
+                        }
+                    });
+                    //reject();
+                } );
+            },
+            contentEl: $inpage
+        } );
+
+        if(!ANIMATION_ENABLED || app.current_page == page){
             $inpage.classList.add('momo-page-current');
-            $outpage.classList.remove('momo-page-current');
+            app.onAnimationEnd($outpage, $inpage, back, cb);
         } else {
 
             var outCb = function(){
@@ -516,7 +566,7 @@ var app = {
                 $outpage.removeEventListener('MSAnimationEnd',     outCb);
                 app.endCurrPage = true;
                 if(app.endNextPage){
-                    app.onAnimationEnd($outpage, $inpage, back);
+                    app.onAnimationEnd($outpage, $inpage, back, cb);
                 }
             };
 
@@ -527,7 +577,7 @@ var app = {
                 $inpage.removeEventListener('MSAnimationEnd',     inCb);
                 app.endNextPage = true;
                 if(app.endCurrPage){
-                    app.onAnimationEnd($outpage, $inpage, back);
+                    app.onAnimationEnd($outpage, $inpage, back, cb);
                 }
             };
 
@@ -554,7 +604,7 @@ var app = {
     },
 
     // Animation Callback
-    onAnimationEnd: function($outpage, $inpage, back) {
+    onAnimationEnd: function($outpage, $inpage, back, cb) {
         app.endCurrPage = false;
         app.endNextPage = false;
         var out_classes = (back ? ANIMATION_BACK_OUT_CLASS : ANIMATION_OUT_CLASS).split(' ');
@@ -566,6 +616,8 @@ var app = {
         for(var i = 0; i < in_classes.length; i++)
             $inpage.classList.remove(in_classes[i]);
         app.isAnimating = false;
+        if(typeof cb == "function")
+            cb();
     },
 
     onTouchStart: function(e) {
@@ -610,43 +662,55 @@ var app = {
 
         // Get search input
         var $searchInput = document.getElementById('momo-search-input');
-        var searchInput = app.utils.replaceAccents($searchInput.value);
-        var id = "search-"+app.utils.hyphenate(searchInput);
+        var searchInput = $searchInput.value;
 
         // Close navigation + Keyboard
         app.nav.close();
         $searchInput.value = '';
         $searchInput.blur();
 
+        // Search
+        app.search(searchInput);
+
+        return false;
+    },
+
+    search: function(query){
+        var id = "search-"+app.utils.hyphenate(query);
+
+        // Store current query
+        app.current_query = query;
+
+        // Get search results
+        var results = app.index.search(app.utils.replaceAccents(query));
+
+        // Register new search results page
+        app.pages[id] = {
+            id: id,
+            icon: "fa fa-search",
+            title: 'Recherche "'+query+'"',
+            content: results.length ? null : '<div class="well text-center text-muted">Aucun resultat</div>',
+            pages: results.map(function(item){
+                return item.ref;
+            })
+        };
+
+        var $page;
+
         // If search query doesn't exist
-        if(!document.getElementById(id)){
-
-            // Get search results
-            var results = app.index.search(searchInput);
-
-            // Register new search results page
-            app.pages[id] = {
-                id: id,
-                icon: "fa fa-search",
-                title: 'Recherche "'+searchInput+'"',
-                content: results.length ? null : '<div class="well text-center text-muted">Aucun resultat</div>',
-                pages: results.map(function(item){
-                    return item.ref;
-                })
-            };
-
+        if(!($page = document.getElementById(id))){
             // Generate result page view
-            var $page = document.createElement('div');
+            $page = document.createElement('div');
             $page.id = id
             $page.className = "momo-page";
-            $page.innerHTML = app.renderPage(app.pages[id]);
             document.getElementById('momo-pages').appendChild($page);
         }
 
+        // Render page
+        $page.innerHTML = app.renderPage(app.pages[id]);
+
         // Navigate to search result page
         window.location.hash = "#"+id;
-
-        return false;
     },
 
     // Various Javascript Helpers
