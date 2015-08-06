@@ -20,6 +20,9 @@
 @import "bootstrap.min.css";
 @import "font-awesome.min.css";
 @import "animations.css";
+@import "responsive-nav.css";
+@import "genericons.css";
+@import "wptr.css";
 
 * {
     -webkit-tap-highlight-color: rgba(0,0,0,0); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
@@ -30,6 +33,7 @@
 html, body,
 #momo-main,
 .momo-page,
+#content,
 .momo-loading {
     height: 100%;
     width: 100%;
@@ -43,9 +47,8 @@ body {
     font-size:14px;
     margin:0px;
     padding:0px;
-    padding-top: 60px;
     width:100%;
-    background: url("../img/greyzz.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
+    background: #3e3f3a;
 }
 
 /* Portrait layout (default) */
@@ -69,7 +72,6 @@ body {
 }
 
 .momo-page {
-    background: url("../img/greyzz.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
     box-shadow: 0 0 20px #000;
     overflow: hidden;
 }
@@ -165,7 +167,10 @@ body {
     overflow: auto;
     backface-visibility: hidden;
     transform: translate3d(0, 0, 0);
+    z-index:11;
+    background: url("../img/greyzz.png") repeat scroll 0 0 #FFF;
 }
+
 
 .momo-page-current,
 .no-js .pt-page {
