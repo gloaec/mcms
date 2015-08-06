@@ -32,16 +32,6 @@
     </head>
     <body>
 
-        <div id="ptr">
-            <span class="genericon genericon-next"></span>
-
-            <div class="loading">
-                <span id="l1"></span>
-                <span id="l2"></span>
-                <span id="l3"></span>
-            </div>
-        </div>
-
         <div id="momo-main">
             <div class="momo-loading text-muted">
                 <i class="fa fa-spinner fa-pulse fa-3x"></i>
@@ -75,6 +65,7 @@
                     </a>
                 {% } %}
             </div>
+            <div class="parent-navbar-brand">
             <span class="navbar-brand" href="#home">
                 <span class="momo-icon">
                     {% var icon = o.icon || o.meta.icon; %}
@@ -84,16 +75,28 @@
                 </span>
                 <span class="momo-title">{%= o.title || o.meta.title %}</span>
             </span>
+        </div>
         </script>
 
         <!-- Main Template -->
         <script type="text/x-tmpl" id="momo-main-tmpl">
 
+            <!-- Pull to refresh container -->
+            <div id="ptr">
+                <span class="genericon genericon-next"></span>
+
+                <div class="loading">
+                    <span id="l1"></span>
+                    <span id="l2"></span>
+                    <span id="l3"></span>
+                </div>
+            </div>
+
             <!-- Navbar -->
             <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
               <div class="container-fluid">
                 <div class="navbar-header momo-header">
-                  <div class="navbar-btn pull-right">
+                  <div class="navbar-btn nav-toggle pull-right">
                       <button id="momo-menu-toggle" type="button" class="btn btn-default pull-right nav-toggle">
                           <i class="fa fa-bars fa-lg"></i>
                       </button>
