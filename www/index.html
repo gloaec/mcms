@@ -127,11 +127,13 @@
         </script>
 
         <script type="text/x-tmpl" id="momo-list-item-tmpl">
-            <a href="#{%= o.id %}" class="{% if(!o.header){ %} list-group-item {% } %}">
+            <a href="#{%= o.id %}" class="{% if(!o.header){ %} list-group-item {% } %} clearfix">
+                <span class="pull-left">
                 {% if(o.icon){ %}
                     {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
                 {% } %}
                 {%= o.title %}
+                </span>
                 {% if(o.external) { %}
                     <i class="fa fa-external-link pull-right"></i>
                 {% } else { %}
