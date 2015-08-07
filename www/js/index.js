@@ -119,7 +119,7 @@ var app = {
         var updateRequired = true;
         if(typeof start === "undefined")
             start = true;
-        if(typeof start === "undefined")
+        if(typeof force === "undefined")
             force = false;
 
         // In case the url is incorrect, we get the backup manifest
@@ -147,10 +147,10 @@ var app = {
         }
 
         // Start AJAX
-        var url          = app.manifest.meta.updateUrl + "?" + (+new Date);
+        var url          = app.manifest.meta.updateUrl;
         var request      = new XMLHttpRequest();
 
-        request.open('GET', url, true);
+        request.open('GET', app.utils.addParameter(url, 'timestamp', (+new Date), true), true);
 
         // AJAX Callback
         request.onload = function() {
@@ -173,7 +173,7 @@ var app = {
 
                     // Reload if new manifest url
                     if(url != app.manifest.meta.updateUrl){
-                        app.loadManifest(start, cb);
+                        app.loadManifest(start, cb, force);
                     // Otherwise fetch assets and start application
                     } else if(updateRequired) {
                         app.fetchAssets(function(){
@@ -829,6 +829,49 @@ var app = {
         hyphenate: function(str){
             str = app.utils.unCamelCase(str);
             return app.utils.slugify(str, "-");
+        },
+
+        addParameter: function(url, parameterName, parameterValue, atStart/*Add param before others*/){
+            replaceDuplicates = true;
+            if(url.indexOf('#') > 0){
+                var cl = url.indexOf('#');
+                urlhash = url.substring(url.indexOf('#'),url.length);
+            } else {
+                urlhash = '';
+                cl = url.length;
+            }
+            sourceUrl = url.substring(0,cl);
+
+            var urlParts = sourceUrl.split("?");
+            var newQueryString = "";
+
+            if (urlParts.length > 1)
+            {
+                var parameters = urlParts[1].split("&");
+                for (var i=0; (i < parameters.length); i++)
+                {
+                    var parameterParts = parameters[i].split("=");
+                    if (!(replaceDuplicates && parameterParts[0] == parameterName))
+                    {
+                        if (newQueryString == "")
+                            newQueryString = "?";
+                        else
+                            newQueryString += "&";
+                        newQueryString += parameterParts[0] + "=" + (parameterParts[1]?parameterParts[1]:'');
+                    }
+                }
+            }
+            if (newQueryString == "")
+                newQueryString = "?";
+
+            if(atStart){
+                newQueryString = '?'+ parameterName + "=" + parameterValue + (newQueryString.length>1?'&'+newQueryString.substring(1):'');
+            } else {
+                if (newQueryString !== "" && newQueryString != '?')
+                    newQueryString += "&";
+                newQueryString += parameterName + "=" + (parameterValue?parameterValue:'');
+            }
+            return urlParts[0] + newQueryString + urlhash;
         }
     }
 };
