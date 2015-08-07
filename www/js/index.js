@@ -526,23 +526,33 @@ var app = {
                     // Run some async loading code here
                     //window.location.reload();
                     app.loadManifest(false, function(){
+                        for(var page in app.pages){
+                            if(typeof app.pages[page].search == 'undefined'){
+                                delete app.pages[page];
+                            document.getElementById("momo-pages").removeChild(
+                                document.getElementById(page)
+                            );
+                            }
+                        }
                         // Regiter pages tree
-                        app.pages = [];
                         app.menu = [];
                         app.manifest.id = 'home';
                         app.registerPage(app.manifest);
                         // Render every page
                         for(var page in app.pages){
-                            var $page = document.createElement('div');
-                            $page.id = app.pages[page].id;
-                            $page.className = "momo-page";
-                            document.getElementById('momo-pages').appendChild($page);
+                            var $page = document.getElementById(page);
+                            if(!$page){
+                                $page = document.createElement('div');
+                                $page.id = app.pages[page].id;
+                                $page.className = "momo-page";
+                                document.getElementById('momo-pages').appendChild($page);
+                            }
                         }
     
                         // Render Homepage
                         //app.render(app.manifest);
                         resolve();
-                        if(app.current_page.startsWith('search-')){
+                        if(typeof app.pages[app.current_page].search != 'undefined'){
                             app.search(app.current_query);
                         } else {
                             app.navigate(app.current_page);
@@ -687,6 +697,7 @@ var app = {
         // Register new search results page
         app.pages[id] = {
             id: id,
+            search: query,
             icon: "fa fa-search",
             title: 'Recherche "'+query+'"',
             content: results.length ? null : '<div class="well text-center text-muted">Aucun resultat</div>',
@@ -695,10 +706,10 @@ var app = {
             })
         };
 
-        var $page;
+        var $page = document.getElementById(id);
 
         // If search query doesn't exist
-        if(!($page = document.getElementById(id))){
+        if(!$page){
             // Generate result page view
             $page = document.createElement('div');
             $page.id = id

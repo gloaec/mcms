@@ -62,7 +62,7 @@ var WebPullToRefresh = (function () {
 			return false;
 		}
 
-		var h = new Hammer( options.contentEl );
+		var h = new Hammer( options.contentEl, { touchAction: 'pan-y'} );
 
 		h.get( 'pan' ).set( { direction: Hammer.DIRECTION_VERTICAL } );
 
@@ -129,8 +129,10 @@ var WebPullToRefresh = (function () {
 	 */
 	var _setContentPan = function() {
 		// Use transforms to smoothly animate elements on desktop and mobile devices
-		options.contentEl.style.transform = options.contentEl.style.webkitTransform = 'translate3d( 0, ' + pan.distance + 'px, 0 )';
-		options.ptrEl.style.transform = options.ptrEl.style.webkitTransform = 'translate3d( 0, ' + ( pan.distance - options.ptrEl.offsetHeight ) + 'px, 0 )';
+		//options.contentEl.style.transform = options.contentEl.style.webkitTransform = 'translate3d( 0, ' + pan.distance + 'px, 0 )';
+		//options.ptrEl.style.transform = options.ptrEl.style.webkitTransform = 'translate3d( 0, ' + ( pan.distance - options.ptrEl.offsetHeight ) + 'px, 0 )';
+        options.contentEl.style.top = (60 + pan.distance) + 'px';
+        options.ptrEl.style.top = (60 + pan.distance - options.ptrEl.offsetHeight) + 'px';
 	};
 
 	/**
@@ -140,6 +142,7 @@ var WebPullToRefresh = (function () {
 		if ( pan.distance > options.distanceToRefresh ) {
 			bodyClass.add( 'ptr-refresh' );
 		} else {
+		    bodyClass.add( 'ptr-pulling' );
 			bodyClass.remove( 'ptr-refresh' );
 		}		
 	};
@@ -156,8 +159,11 @@ var WebPullToRefresh = (function () {
 
 		e.preventDefault();
 
-		options.contentEl.style.transform = options.contentEl.style.webkitTransform = '';
-		options.ptrEl.style.transform = options.ptrEl.style.webkitTransform = '';
+		//options.contentEl.style.transform = options.contentEl.style.webkitTransform = '';
+		//options.ptrEl.style.transform = options.ptrEl.style.webkitTransform = '';
+        options.contentEl.style.top = "";//"110px";
+        options.ptrEl.style.top = "";//60px";
+		bodyClass.remove( 'ptr-pulling' );
 
 		if ( document.body.classList.contains( 'ptr-refresh' ) ) {
 			_doLoading();
@@ -176,7 +182,7 @@ var WebPullToRefresh = (function () {
 		bodyClass.add( 'ptr-loading' );
 
 		// If no valid loading function exists, just reset elements
-		if ( ! options.loadingFunction ) {
+		if (typeof options.loadingFunction != 'function') {
 			return _doReset();
 		}
 
@@ -197,13 +203,21 @@ var WebPullToRefresh = (function () {
 		bodyClass.remove( 'ptr-loading' );
 		bodyClass.remove( 'ptr-refresh' );
 		bodyClass.add( 'ptr-reset' );
+      
+        setTimeout(function(){
+		    bodyClass.remove( 'ptr-reset' );
+        }, 250);
 
-		var bodyClassRemove = function() {
-			bodyClass.remove( 'ptr-reset' );
-			document.body.removeEventListener( 'transitionend', bodyClassRemove, false );
-		};
+        //transitionEnd(options.contentEl).bind(function(){
+		//    bodyClass.remove( 'ptr-reset' );
+        //    transitionEnd(options.contentEl).unbind();
+        //});
 
-		document.body.addEventListener( 'transitionend', bodyClassRemove, false );
+		//var bodyClassRemove = function() {
+		//	options.contentEl.removeEventListener( 'transitionend', bodyClassRemove, false );
+		//};
+
+		//options.contentEl.addEventListener( 'transitionend', bodyClassRemove, false );
 	};
 
 	return {
