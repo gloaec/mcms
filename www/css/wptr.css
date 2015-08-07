@@ -103,11 +103,28 @@
 }
 
 .ptr-reset .momo-page {
-	-webkit-transform: translate3d( 0, 0, 0 );
-	transform: translate3d( 0, 0, 0 );
+	/*-webkit-transform: translate3d( 0, 0, 0 );
+	transform: translate3d( 0, 0, 0 );*/
+    top: 60px;
+	transition: all .25s ease;
 }
 
 .ptr-loading .momo-page {
-	-webkit-transform: translate3d( 0, 50px, 0 );
-	transform: translate3d( 0, 50px, 0 );
+	/*-webkit-transform: translate3d( 0, 50px, 0 );
+	transform: translate3d( 0, 50px, 0 );*/
+    top: 110px;
+	transition: all .25s ease;
+}
+.ptr-reset #ptr {
+	/*-webkit-transform: translate3d( 0, 0, 0 );
+	transform: translate3d( 0, 0, 0 );*/
+    top: 0px;
+	transition: all .25s ease;
+}
+
+.ptr-loading #ptr {
+	/*-webkit-transform: translate3d( 0, 50px, 0 );
+	transform: translate3d( 0, 50px, 0 );*/
+    top: 60px;
+	transition: all .25s ease;
 }
