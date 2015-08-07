@@ -18,7 +18,7 @@
  */
 
 // Constants
-var DEBUG = true;
+var DEBUG = false;
 var DEBUG_WWW_URL = 'http://localhost/~ghis/momo/www/';
 var ANIMATION_ENABLED = true;
 var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
