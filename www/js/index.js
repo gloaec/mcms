@@ -112,13 +112,15 @@ var app = {
     },
 
     // JSON Manifest loading function
-    loadManifest: function(start, cb){
+    loadManifest: function(start, cb, force){
         if(DEBUG) console.log('load '+JSON.stringify(app.manifest));
         app.utils.setLoadingMsg("Chargement de l'application");
 
         var updateRequired = true;
         if(typeof start === "undefined")
             start = true;
+        if(typeof start === "undefined")
+            force = false;
 
         // In case the url is incorrect, we get the backup manifest
         app.safeManifest = app.manifest;
@@ -136,7 +138,7 @@ var app = {
         updateRequired   = timeDiff > app.manifest.meta.updateFreq;
 
         // Start Application Return if no need for update
-        if(!updateRequired && !DEBUG){
+        if(!updateRequired && !DEBUG && !force){
             if(start)
                 app.start();
             if(typeof cb === "function")
@@ -145,7 +147,7 @@ var app = {
         }
 
         // Start AJAX
-        var url          = app.manifest.meta.updateUrl;
+        var url          = app.manifest.meta.updateUrl + "?" + (+new Date);
         var request      = new XMLHttpRequest();
 
         request.open('GET', url, true);
@@ -557,9 +559,9 @@ var app = {
                         } else {
                             app.navigate(app.current_page);
                         }
-                    });
+                    }, true); // Force reload manifest
                     //reject();
-                } );
+                });
             },
             contentEl: $inpage
         } );
