@@ -14,6 +14,8 @@ var WebPullToRefresh = (function () {
 
 		// Number of pixels of panning until refresh 
 		distanceToRefresh: 70, 
+		distanceToBack: 20, 
+		distanceToForward: 20, 
 
 		// Pointer to function that does the loading and returns a promise
 		loadingFunction: false,
@@ -35,7 +37,9 @@ var WebPullToRefresh = (function () {
 	var pan = {
 		enabled: false,
 		distance: 0,
-		startingPositionY: 0
+		startingPositionY: 0,
+        distanceRight: 0,
+        distanceLeft: 0
 	};
 	
 	/**
@@ -54,6 +58,8 @@ var WebPullToRefresh = (function () {
 			contentEl: params.contentEl || document.getElementById( defaults.contentEl ),
 			ptrEl: params.ptrEl || document.getElementById( defaults.ptrEl ),
 			distanceToRefresh: params.distanceToRefresh || defaults.distanceToRefresh,
+			distanceToBack: params.distanceToBack || defaults.distanceToBack,
+			distanceToForward: params.distanceToBack || defaults.distanceToForward,
 			loadingFunction: params.loadingFunction || defaults.loadingFunction,
 			resistance: params.resistance || defaults.resistance
 		};
@@ -62,13 +68,28 @@ var WebPullToRefresh = (function () {
 			return false;
 		}
 
-		var h = new Hammer( options.contentEl, { touchAction: 'pan-y'} );
+        var iframes = options.contentEl.getElementsByTagName('iframe');
 
-		h.get( 'pan' ).set( { direction: Hammer.DIRECTION_VERTICAL } );
+        if(iframes.length > 0){
+            var iframe = iframes[0];
+            var oE1 = iframe.contentWindow;
+            if(window.pageYOffset==undefined)
+            {   
+              oE1= (oE1.document.documentElement) ? oE1.document.documentElement : oE1=document.body; 
+            }
+            options.contentEl = iframe;
+        }
+
+
+		var h = new Hammer( options.contentEl, { touchAction: 'pan-y' } );
+
+		h.get( 'pan' ).set( { direction: Hammer.DIRECTION_ALL } );
 
 		h.on( 'panstart', _panStart );
 		h.on( 'pandown', _panDown );
 		h.on( 'panup', _panUp );
+		h.on( 'panright', _panRight );
+		h.on( 'panleft', _panLeft );
 		h.on( 'panend', _panEnd );
 	};
 
@@ -102,6 +123,7 @@ var WebPullToRefresh = (function () {
 		_setBodyClass();
 	};
 
+
 	/**
 	 * Handle element on screen movement when the pandown events is firing.
 	 * 
@@ -124,6 +146,34 @@ var WebPullToRefresh = (function () {
 		_setBodyClass();
 	};
 
+	var _panRight = function(e) {
+
+		e.preventDefault();
+		pan.distanceRight = e.distance / options.resistance;
+
+		if ( pan.distanceLeft < e.distance / options.resistance ) {
+			pan.distanceLeft = 0;
+		} else {
+			pan.distanceLeft = e.distance / options.resistance;
+		}
+
+		_setBodyClass();
+	};
+
+	var _panLeft = function(e) {
+
+		e.preventDefault();
+		pan.distanceLeft = e.distance / options.resistance;
+
+		if ( pan.distanceRight < e.distance / options.resistance ) {
+			pan.distanceRight = 0;
+		} else {
+			pan.distanceRight = e.distance / options.resistance;
+		}
+
+		_setBodyClass();
+	};
+
 	/**
 	 * Set the CSS transform on the content element to move it on the screen.
 	 */
@@ -139,6 +189,16 @@ var WebPullToRefresh = (function () {
 	 * Set/remove the loading body class to show or hide the loading indicator after pull down.
 	 */
 	var _setBodyClass = function() {
+		if ( pan.distanceRight > options.distanceToBack ) {
+			bodyClass.add( 'ptr-back' );
+        } else {
+			bodyClass.remove( 'ptr-back' );
+        }
+		if ( pan.distanceLeft > options.distanceToForward ) {
+			bodyClass.add( 'ptr-forward' );
+        } else {
+			bodyClass.remove( 'ptr-forward' );
+        }
 		if ( pan.distance > options.distanceToRefresh ) {
 			bodyClass.add( 'ptr-refresh' );
 		} else {
@@ -153,9 +213,6 @@ var WebPullToRefresh = (function () {
 	 * @param {object} e - Event object
 	 */
 	var _panEnd = function(e) {
-		if ( ! pan.enabled ) {
-			return;
-		}
 
 		e.preventDefault();
 
@@ -167,11 +224,17 @@ var WebPullToRefresh = (function () {
 
 		if ( document.body.classList.contains( 'ptr-refresh' ) ) {
 			_doLoading();
+        } else if ( document.body.classList.contains( 'ptr-back' ) ) {
+            _doBack();
+        } else if ( document.body.classList.contains( 'ptr-forward' ) ) {
+            _doForward();
 		} else {
 			_doReset();
 		}
 
 		pan.distance = 0;
+		pan.distanceRight = 0;
+		pan.distanceLeft = 0;
 		pan.enabled = false;
 	};
 
@@ -196,11 +259,24 @@ var WebPullToRefresh = (function () {
 		}, 1000 );
 	};
 
+    var _doBack = function() {
+        window.history.back();
+        _doReset();
+    };
+
+    var _doForward = function() {
+        window.history.forward();
+        _doReset();
+    };
+
 	/**
 	 * Reset all elements to their starting positions before any paning took place.
 	 */
 	var _doReset = function() {
 		bodyClass.remove( 'ptr-loading' );
+		bodyClass.remove( 'ptr-back' );
+		bodyClass.remove( 'ptr-forward' );
+		bodyClass.remove( 'ptr-pulling' );
 		bodyClass.remove( 'ptr-refresh' );
 		bodyClass.add( 'ptr-reset' );
       

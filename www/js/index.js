@@ -251,7 +251,7 @@ var app = {
     fetchAssets: function(cb){
 
         if(DEBUG) console.log('fetch assets');
-        app.utils.setLoadingMsg("Téléchargement de la mise à jour");
+        app.utils.setLoadingMsg("Mise à jour - 0%");
 
         if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
             window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
@@ -261,34 +261,50 @@ var app = {
                 var uri = encodeURI(app.manifest.meta.assetsUrl);
                 var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
                 
+                zip.unzip(uri, rootPath, 
+                // Success callback
+                function(ret){
+                    app.utils.setLoadingMsg("Mise à jour - 100%");
+                    if(ret == 0)
+                        alert('Success unzip');
+                    if(ret == -1)
+                        alert('Error unzip');
+                    cb();
+                },
+                // Progress callback
+                function(e){
+                    var progress = Math.round((e.loaded / e.total) * 100);
+                    app.utils.setLoadingMsg("Mise à jour - "+progress+"%");
+                });
+
                 // Fetch Assets Zip Archive
-                fileTransfer.download(
-                    // Source
-                    uri, 
-                    // Destination
-                    filePath, 
-                    // Success callback 
-                    function(entry) {
-                        app.utils.setLoadingMsg("Extraction de la mise à jour");
-                        // Unzip Assets
-                        zip.unzip(filePath, rootPath, function(){
-                            if(DEBUG) console.log('unzip success');
-                            cb();
-                        });
-                    },
-                    // Error callback
-                    function(error) {
-                        if(DEBUG) console.log("download error source " + error.source);
-                        if(DEBUG) console.log("download error target " + error.target);
-                        if(DEBUG) console.log("upload error code" + error.code);
-                        cb();
-                    },
-                    // Misc
-                    false,
-                    {
-                        headers: {}
-                    }
-                );
+                //fileTransfer.download(
+                //    // Source
+                //    uri, 
+                //    // Destination
+                //    filePath, 
+                //    // Success callback 
+                //    function(entry) {
+                //        app.utils.setLoadingMsg("Extraction de la mise à jour");
+                //        // Unzip Assets
+                //        zip.unzip(filePath, rootPath, function(){
+                //            if(DEBUG) console.log('unzip success');
+                //            cb();
+                //        });
+                //    },
+                //    // Error callback
+                //    function(error) {
+                //        if(DEBUG) console.log("download error source " + error.source);
+                //        if(DEBUG) console.log("download error target " + error.target);
+                //        if(DEBUG) console.log("upload error code" + error.code);
+                //        cb();
+                //    },
+                //    // Misc
+                //    false,
+                //    {
+                //        headers: {}
+                //    }
+                //);
             }, function(error){ 
                 if(DEBUG) console.error('Filesystem error');
                 cb();
@@ -347,6 +363,7 @@ var app = {
         // Render Homepage
         app.render(app.manifest);
         app.navigate('home', false, function(){
+            app.flash(tmpl('momo-update-available-tmpl', {}), 'success');
             // Import Scripts & Styles
             app.appendAssets(function(){ 
 
@@ -524,44 +541,7 @@ var app = {
         // Pull to update binder
         WebPullToRefresh.init( {
             loadingFunction: function(){
-                return new Promise( function( resolve, reject ) {
-                    // Run some async loading code here
-                    //window.location.reload();
-                    app.loadManifest(false, function(){
-                        for(var page in app.pages){
-                            if(typeof app.pages[page].search == 'undefined'){
-                                delete app.pages[page];
-                            document.getElementById("momo-pages").removeChild(
-                                document.getElementById(page)
-                            );
-                            }
-                        }
-                        // Regiter pages tree
-                        app.menu = [];
-                        app.manifest.id = 'home';
-                        app.registerPage(app.manifest);
-                        // Render every page
-                        for(var page in app.pages){
-                            var $page = document.getElementById(page);
-                            if(!$page){
-                                $page = document.createElement('div');
-                                $page.id = app.pages[page].id;
-                                $page.className = "momo-page";
-                                document.getElementById('momo-pages').appendChild($page);
-                            }
-                        }
-    
-                        // Render Homepage
-                        //app.render(app.manifest);
-                        resolve();
-                        if(typeof app.pages[app.current_page].search != 'undefined'){
-                            app.search(app.current_query);
-                        } else {
-                            app.navigate(app.current_page);
-                        }
-                    }, true); // Force reload manifest
-                    //reject();
-                });
+                return new Promise( app.update );
             },
             contentEl: $inpage
         } );
@@ -644,6 +624,21 @@ var app = {
         var hash = window.location.hash, length = window.history.length;
         var page = window.location.hash.slice(1);
 
+        if(page == 'momo-update'){
+            window.location.replace(app.hashHistory[app.hashHistory.length-1]);
+            document.body.classList.add('ptr-loading');
+            var cb = function() {
+                setTimeout(function(){
+                    document.body.classList.remove('ptr-loading');
+                    document.body.classList.add('ptr-reset');
+                    setTimeout(function() {
+                        document.body.classList.remove('ptr-reset');
+                    }, 250);
+                }, 1000);
+            };
+            return app.update(cb, cb);
+        }
+
         if(!app.pages.hasOwnProperty(page)){
             page = 'home';
         } 
@@ -724,6 +719,58 @@ var app = {
 
         // Navigate to search result page
         window.location.hash = "#"+id;
+    },
+
+    flash: function(message, type) {
+        var elements = document.getElementsByClassName("momo-flash-messages");
+        for (var i = 0; i < elements.length; i++)
+            elements[i].innerHTML += tmpl('momo-flash-message-tmpl', { 
+                message: message,
+                type: type ? type : 'info'  
+            });
+    },
+    
+    update: function( resolve, reject ) {
+        // Run some async loading code here
+        //window.location.reload();
+
+        app.loadManifest(false, function(){
+            for(var page in app.pages){
+                if(typeof app.pages[page].search == 'undefined'){
+                    delete app.pages[page];
+                document.getElementById("momo-pages").removeChild(
+                    document.getElementById(page)
+                );
+                }
+            }
+            // Regiter pages tree
+            app.menu = [];
+            app.manifest.id = 'home';
+            app.registerPage(app.manifest);
+            // Render every page
+            for(var page in app.pages){
+                var $page = document.getElementById(page);
+                if(!$page){
+                    $page = document.createElement('div');
+                    $page.id = app.pages[page].id;
+                    $page.className = "momo-page";
+                    document.getElementById('momo-pages').appendChild($page);
+                }
+            }
+    
+            // Render Homepage
+            //app.render(app.manifest);
+            
+            if(typeof resolve === 'function')
+                resolve();
+            app.utils.setLoadingMsg("Mise à jour effectuée !");
+            if(typeof app.pages[app.current_page].search != 'undefined'){
+                app.search(app.current_query);
+            } else {
+                app.navigate(app.current_page);
+            }
+        }, true); // Force reload manifest
+        //reject();
     },
 
     // Various Javascript Helpers

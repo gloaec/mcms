@@ -86,9 +86,10 @@
                 <span class="genericon genericon-next"></span>
 
                 <div class="loading">
-                    <span id="l1"></span>
-                    <span id="l2"></span>
-                    <span id="l3"></span>
+                    <span class="l" id="l1"></span>
+                    <span class="l" id="l2"></span>
+                    <span class="l" id="l3"></span>
+                    <span class="momo-loading-text"></span>
                 </div>
             </div>
 
@@ -148,6 +149,9 @@
         <script type="text/x-tmpl" id="momo-icon-item-tmpl">
             <div class="col-xs-{%= o.colxs %} col-sm-{%= o.colsm %} col-md-{%= o.colmd %} col-lg-{%= o.collg %}">
                 <a href="#{%= o.id %}" class="btn btn-block text-center {%= o.className || 'btn-default' %}">
+                    {% if(o.external){ %}
+                        <i class="fa fa-external-link top-right"></i>
+                    {% } %}
                     {% if(o.icon){ %}
                         <div style="height: 42px;">
                             {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 42 }) %}
@@ -158,11 +162,30 @@
             </div>
         </script>
 
-        <!-- Page Template -->
+        <!-- Flash message template -->
+        <script type="text/x-tmpl" id="momo-flash-message-tmpl">
+            <div class="alert alert-{%= o.type %}">
+                {%# o.message %}
+            </div>
+        </script>
+
+        <!-- Update availbable template -->
+        <script type="text/x-tmpl" id="momo-update-available-tmpl">
+            <div class="clearfix">
+                <a href="#momo-update" class="btn btn-success pull-right">
+                   <i class="fa fa-download"></i>
+                   Mettre à jour
+                </a>
+                <strong>Une nouvelle version est disponible !</strong>
+            </div>
+        </script>
+
+        <!-- Page template -->
         <script type="text/x-tmpl" id="momo-page-tmpl">
 
             <div class="{% if(o.url){ %}momo-frame-wrapper{% } else { %}momo-page-wrapper{% } %} clearfix">
-        
+                <div class="momo-flash-messages"></div>
+                       
                 <div class="container-fluid">
                     <section class="momo-page-content">{%# o.content %}</section>
                 </div>
