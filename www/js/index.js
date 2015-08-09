@@ -137,7 +137,7 @@ var app = {
         var updateRequired   = timeDiff > app.manifest.meta.updateFreq;
 
         if(updateRequired)
-            app.flash("Vérifiez si de nouvelles mises à jours sont disponibles en tirant la page vers les bas", "info");
+            app.flash("Vérifiez si un nouvelle mise à jour est disponible en tirant la page vers les bas", "info");
 
         if(typeof resolve === 'function')
             resolve(updateRequired);
@@ -383,34 +383,56 @@ var app = {
         }
     },
 
-    appendAssets: function(cb){
-        var link = document.createElement("link");
-        link.type = "text/css";
-        link.rel = "stylesheet";
+    appendAssets: function(resolve, reject){
+        var append = function(rootPath){
 
-        var script = document.createElement("script");
-        script.type = "text/javascript";
+            // Link Tag
+            var link = document.createElement("link");
+            link.type = "text/css";
+            link.rel = "stylesheet";
+            link.href = rootPath+"assets/index.css";
+
+            // Script tag
+            var script = document.createElement("script");
+            script.type = "text/javascript";
+            script.src = rootPath+"assets/index.js";
+
+            // Delete previous link tags
+            var els = document.getElementsByTagName("link"),
+              els_length = els.length;
+            for (var i = 0, l = els_length; i < l; i++) {
+                var el = els[i];
+                if (el.href === link.href) {
+                    delete el;
+                }
+            }
+
+            // Delete previous scripts tags
+            els = document.getElementsByTagName("script");
+            els_length = els.length;
+            for (var i = 0, l = els_length; i < l; i++) {
+                var el = els[i];
+                if (el.src === script.src) {
+                    delete el;
+                }
+            }
+
+            // Reinsert
+            document.getElementsByTagName("head")[0].appendChild(link);
+            document.getElementsByTagName("head")[0].appendChild(script);
+
+            resolve();
+        };
 
         if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
             window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
 
                 // Get filesystem's relative cache folder
                 var rootPath = fileSystem.root.toURL();
-                
-                link.href = rootPath+"assets/index.css";
-                script.src = rootPath+"assets/index.js";
-
-                document.getElementsByTagName("head")[0].appendChild(link);
-                document.getElementsByTagName("head")[0].appendChild(script);
-                cb();
+                append(rootPath);
             });
         } else {
-            link.href = DEBUG_WWW_URL+"assets/index.css";
-            script.src = DEBUG_WWW_URL+"assets/index.js";
-
-            document.getElementsByTagName("head")[0].appendChild(link);
-            document.getElementsByTagName("head")[0].appendChild(script);
-            cb();
+            append(DEBUG_WWW_URL);
         }
     },
 
@@ -497,7 +519,8 @@ var app = {
             app.index.add({
                 id: data.id,
                 title: data.title,
-                body: data.content
+                body: data.content,
+                keywords: data.keywords
             });
             
             return data.id;
@@ -822,16 +845,47 @@ var app = {
             }
         }
 
-        app.loadManifest(function(){
-            app.loadAssets(function(){
-                app.reset();
-                if(typeof resolve === 'function')
-                    resolve();
-            }, reject);
-        }, reject);
+        var appendAssets = function(_resolve, _reject){
+            app.appendAssets(
+                function(){
+                    app.reset();
+                    if(typeof _resolve === 'function')
+                        _resolve();
+                }, 
+                function(){
+                    app.reset();
+                    if(typeof _reject === 'function')
+                        _reject();
+                }
+            );
+        };
+
+        var loadAssets = function(_resolve, _reject){
+            app.loadAssets(
+                function(){
+                    appendAssets(_resolve, _reject);       
+                },
+                function(){
+                    appendAssets(_resolve, _reject);       
+                }
+            );
+        };
+
+        app.loadManifest(
+            function(){
+                loadAssets(resolve, reject);
+            },
+            function(){
+                loadAssets(resolve, reject);
+            }
+        );
     },
 
     reset: function(){
+        // Update Reminder
+        clearTimeout(app.updateTimeout);
+        app.updateTimeout = setTimeout( app.checkForLastUpdateCheck, app.manifest.meta.updateFreq );
+
         for(var page in app.pages){
             if(typeof app.pages[page].search == 'undefined'){
                 delete app.pages[page];
