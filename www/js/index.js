@@ -25,6 +25,7 @@ var ANIMATION_OUT_CLASS  = 'pt-page-moveToLeftEasing pt-page-ontop';
 var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
 var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
+var ON_PULL = 'checkForUpdate'; // || 'update'
 
 // Application
 var app = {
@@ -40,8 +41,10 @@ var app = {
         meta: {
             'title': 'Momo Application',
             'contact': 'contact@cadoles.com',
-            'updateUrl': 'index.json',
-            'updateFreq': 0
+            'manifestUrl': 'index.json',
+            'assetsUrl': 'assets.zip',
+            'updateFreq': 0,
+            'content': tmpl('momo-first-launch-tmpl')
         }
     },
 
@@ -61,6 +64,10 @@ var app = {
     hashHistory   : [window.location.hash],
     historyLength : window.history.length,
     rootPath      : '',
+    hasStarted    : false,
+    assetsMtime   : null,
+    manifestMtime : null,
+    updateTimeout : null,
 
     // Application Constructor
     initialize: function() {
@@ -91,8 +98,20 @@ var app = {
 
     // Device ready callback
     onDeviceReady: function() {
+
+        // Init search engine index
         app.initIndex();
-        app.loadManifest();
+
+        // Load manifest from localStorage
+        app.loadLocalManifest();
+
+        // Check for new updates
+        app.checkForUpdate(app.start, app.start);
+
+        // Update Reminder
+        app.updateTimeout = setTimeout( app.checkForLastUpdateCheck, app.manifest.meta.updateFreq );
+
+        // Touch events faster response patch
         FastClick.attach(document.body);
     },
 
@@ -111,43 +130,90 @@ var app = {
         });
     },
 
-    // JSON Manifest loading function
-    loadManifest: function(start, cb, force){
-        if(DEBUG) console.log('load '+JSON.stringify(app.manifest));
-        app.utils.setLoadingMsg("Chargement de l'application");
-
-        var updateRequired = true;
-        if(typeof start === "undefined")
-            start = true;
-        if(typeof force === "undefined")
-            force = false;
-
-        // In case the url is incorrect, we get the backup manifest
-        app.safeManifest = app.manifest;
-
-        // Get manifest from localStorage if it exists
-        if(localStorage.getItem("momo-manifest")){
-            try {
-                app.manifest = JSON.parse(localStorage.getItem("momo-manifest"));
-            } catch(e) {}
-        }
-
+    checkForLastUpdateCheck: function(resolve, reject){
         // Checklast Update
         var lastUpdate   = localStorage.getItem("momo-timestamp") ? new Date(localStorage.getItem("momo-timestamp")) : new Date(0);
         var timeDiff     = ((new Date()).getTime() - lastUpdate.getTime()) / 1000;
-        updateRequired   = timeDiff > app.manifest.meta.updateFreq;
+        var updateRequired   = timeDiff > app.manifest.meta.updateFreq;
 
-        // Start Application Return if no need for update
-        if(!updateRequired && !DEBUG && !force){
-            if(start)
-                app.start();
-            if(typeof cb === "function")
-                cb();
-            return;
+        if(updateRequired)
+            app.flash("Vérifiez si de nouvelles mises à jours sont disponibles en tirant la page vers les bas", "info");
+
+        if(typeof resolve === 'function')
+            resolve(updateRequired);
+    },
+
+    checkForUpdate: function(resolve, reject) {
+        app.utils.setLoadingMsg("Verification des mises à jour");
+
+        var manifestReady = false;
+        var assetsReady = false;
+        var updateAvailable = false;
+        var updateError = false;
+
+        var onGetMtime = function(key, mtime, ready) {
+            old_mtime = localStorage.getItem("momo-"+key+"-mtime");
+            if (mtime) {
+                if(mtime != old_mtime) {
+                    updateAvailable = true;
+                }
+            } else {
+                updateError = true;
+            }
+            if(ready){
+                if(updateError){
+                    if(DEBUG) console.error('Error checking for updates');
+                    app.flash("Impossible de détecter des nouvelles mises à jour", 'danger');
+                    if(typeof reject === 'function')
+                        reject();
+                } else {
+                    if(updateAvailable){
+                        app.flash(tmpl('momo-update-available-tmpl', {}), 'success');
+                        app.utils.setLoadingMsg("Mise à jour disponible !");
+                    } else {
+                        app.utils.setLoadingMsg("Aucunes nouvelles mises à jour");
+                    }
+                    if(typeof resolve === 'function')
+                        resolve(updateAvailable);
+                }
+            }
+        };
+
+        app.utils.getModifiedTime(app.manifest.meta.manifestUrl, function(mtime) {
+            app.manifestMtime = mtime;
+            onGetMtime('manifest', mtime, assetsReady);
+            manifestReady = true;
+        });
+        app.utils.getModifiedTime(app.manifest.meta.assetsUrl, function(mtime) {
+            app.assetsMtime = mtime;
+            onGetMtime('assets', mtime, manifestReady);
+            assetsReady = true;
+        });
+    },
+
+    loadLocalManifest: function() {
+        var manifest;
+        if(manifest = localStorage.getItem("momo-manifest")){
+            try {
+                app.manifest = JSON.parse(manifest);
+            } catch(e) {}
         }
+    },
+
+    // JSON Manifest loading function
+    loadManifest: function(resolve, reject){
+        if(DEBUG) console.log('load '+JSON.stringify(app.manifest));
+        app.utils.setLoadingMsg("Mise à jour du manifest - 0%");
+
+        // In case the url is incorrect, we get the backup manifest
+
+        app.safeManifest = app.manifest;
+
+        // Get manifest from localStorage if it exists
+        app.loadLocalManifest();
 
         // Start AJAX
-        var url          = app.manifest.meta.updateUrl;
+        var url          = app.manifest.meta.manifestUrl;
         var request      = new XMLHttpRequest();
 
         request.open('GET', app.utils.addParameter(url, 'timestamp', (+new Date), true), true);
@@ -172,34 +238,27 @@ var app = {
                     }
 
                     // Reload if new manifest url
-                    if(url != app.manifest.meta.updateUrl){
-                        app.loadManifest(start, cb, force);
-                    // Otherwise fetch assets and start application
-                    } else if(updateRequired) {
-                        app.fetchAssets(function(){
-                            if(start)
-                                app.start();
-                            if(typeof cb === "function")
-                                cb();
-                        });
-                    // Start application with no udpates
-                    } else {
-                        if(start)
-                            app.start();
-                        if(typeof cb === "function")
-                            cb();
+                    if(url != app.manifest.meta.manifestUrl){
+                        app.loadManifest(resolve, reject);
+                    } else  {
+                        if(typeof resolve === "function")
+                            resolve();
                     }
                 });
 
             // Handle AJAX Error
             } else {
                 app.onAjaxError(url, request);
+                if(typeof reject === "function")
+                    reject();
             }
         };
 
         // Handle AJAX Error
         request.onerror = function() {
             app.onAjaxError(url);
+            if(typeof reject === "function")
+                reject();
         };
 
         // Send AJAX
@@ -248,10 +307,10 @@ var app = {
     },
 
     // Get distant zip asset archive and update local cache
-    fetchAssets: function(cb){
+    loadAssets: function(resolve, reject){
 
         if(DEBUG) console.log('fetch assets');
-        app.utils.setLoadingMsg("Téléchargement de la mise à jour");
+        app.utils.setLoadingMsg("Téléchargement des assets - 0%");
 
         if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
             window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
@@ -261,41 +320,66 @@ var app = {
                 var uri = encodeURI(app.manifest.meta.assetsUrl);
                 var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
                 
-                // Fetch Assets Zip Archive
-                fileTransfer.download(
-                    // Source
-                    uri, 
-                    // Destination
-                    filePath, 
-                    // Success callback 
-                    function(entry) {
-                        app.utils.setLoadingMsg("Extraction de la mise à jour");
-                        // Unzip Assets
-                        zip.unzip(filePath, rootPath, function(){
-                            if(DEBUG) console.log('unzip success');
-                            cb();
-                        });
-                    },
-                    // Error callback
-                    function(error) {
-                        if(DEBUG) console.log("download error source " + error.source);
-                        if(DEBUG) console.log("download error target " + error.target);
-                        if(DEBUG) console.log("upload error code" + error.code);
-                        cb();
-                    },
-                    // Misc
-                    false,
-                    {
-                        headers: {}
+                zip.unzip(uri, rootPath, 
+                // Success callback
+                function(ret){
+                    app.utils.setLoadingMsg("Téléchargement des assets - 100%");
+                    if(ret == 0) {
+                        if(typeof resolve === 'function')
+                            resolve();
+                    } else 
+                    if(ret == -1) {
+                        if(typeof reject === 'function')
+                            reject();
                     }
-                );
+                },
+                // Progress callback
+                function(e){
+                    var progress = Math.round((e.loaded / e.total) * 100);
+                    app.utils.setLoadingMsg("Téléchargement des assets - "+progress+"%");
+                });
+
+                // Fetch Assets Zip Archive
+                //fileTransfer.download(
+                //    // Source
+                //    uri, 
+                //    // Destination
+                //    filePath, 
+                //    // Success callback 
+                //    function(entry) {
+                //        app.utils.setLoadingMsg("Extraction de la mise à jour");
+                //        // Unzip Assets
+                //        zip.unzip(filePath, rootPath, function(){
+                //            if(DEBUG) console.log('unzip success');
+                //            cb();
+                //        });
+                //    },
+                //    // Error callback
+                //    function(error) {
+                //        if(DEBUG) console.log("download error source " + error.source);
+                //        if(DEBUG) console.log("download error target " + error.target);
+                //        if(DEBUG) console.log("upload error code" + error.code);
+                //        cb();
+                //    },
+                //    // Misc
+                //    false,
+                //    {
+                //        headers: {}
+                //    }
+                //);
             }, function(error){ 
                 if(DEBUG) console.error('Filesystem error');
-                cb();
+                app.utils.setLoadingMsg("Erreur du système de fichier");
+                app.flash("Erreur du système de fichier", 'danger');
+                if(typeof reject === 'function')
+                    reject();
             });
         } else {
             if(DEBUG) console.error('Plugins "zip" & "file-transfer" not available (local mode ?)');
-            cb();
+            app.utils.setLoadingMsg("Plugin 'zip' indisponible");
+            app.flash("Plugin 'zip' indisponible", 'danger');
+            if(typeof reject === 'function')
+                reject();
         }
     },
 
@@ -331,9 +415,10 @@ var app = {
     },
 
     // Application starter
-    start: function(){
+    start: function(resolve, reject){
         if(DEBUG) console.log('start '+JSON.stringify(app.manifest));
         app.utils.setLoadingMsg("Démarrage de l'application");
+        app.hasStarted = true;
 
         // Default route to home
         app.manifest.id = app.current_page = 'home';
@@ -347,10 +432,8 @@ var app = {
         // Render Homepage
         app.render(app.manifest);
         app.navigate('home', false, function(){
-            // Import Scripts & Styles
-            app.appendAssets(function(){ 
-
-            });
+            if(typeof resolve == 'function')
+                resolve();
         });
 
         // Listen for search form submission
@@ -522,49 +605,7 @@ var app = {
         $inpage.innerHTML = app.renderPage(page_obj);
 
         // Pull to update binder
-        WebPullToRefresh.init( {
-            loadingFunction: function(){
-                return new Promise( function( resolve, reject ) {
-                    // Run some async loading code here
-                    //window.location.reload();
-                    app.loadManifest(false, function(){
-                        for(var page in app.pages){
-                            if(typeof app.pages[page].search == 'undefined'){
-                                delete app.pages[page];
-                            document.getElementById("momo-pages").removeChild(
-                                document.getElementById(page)
-                            );
-                            }
-                        }
-                        // Regiter pages tree
-                        app.menu = [];
-                        app.manifest.id = 'home';
-                        app.registerPage(app.manifest);
-                        // Render every page
-                        for(var page in app.pages){
-                            var $page = document.getElementById(page);
-                            if(!$page){
-                                $page = document.createElement('div');
-                                $page.id = app.pages[page].id;
-                                $page.className = "momo-page";
-                                document.getElementById('momo-pages').appendChild($page);
-                            }
-                        }
-    
-                        // Render Homepage
-                        //app.render(app.manifest);
-                        resolve();
-                        if(typeof app.pages[app.current_page].search != 'undefined'){
-                            app.search(app.current_query);
-                        } else {
-                            app.navigate(app.current_page);
-                        }
-                    }, true); // Force reload manifest
-                    //reject();
-                });
-            },
-            contentEl: $inpage
-        } );
+        app.bindPagePull($inpage);
 
         if(!ANIMATION_ENABLED || app.current_page == page){
             $inpage.classList.add('momo-page-current');
@@ -615,6 +656,20 @@ var app = {
         app.current_page = page;
     },
 
+    bindPagePull: function($page) {
+        WebPullToRefresh.destroy();
+        WebPullToRefresh.init( {
+            loadingFunction: function(){
+                if(ON_PULL == "checkForUpdate")
+                    return new Promise( app.checkForUpdate );
+                else
+                if(ON_PULL == "update")
+                    return new Promise( app.update );
+            },
+            contentEl: $page
+        } );
+    },
+
     // Animation Callback
     onAnimationEnd: function($outpage, $inpage, back, cb) {
         app.endCurrPage = false;
@@ -643,6 +698,21 @@ var app = {
     onHashChange: function(e) {
         var hash = window.location.hash, length = window.history.length;
         var page = window.location.hash.slice(1);
+
+        if(page == 'momo-update'){
+            window.location.replace(app.hashHistory[app.hashHistory.length-1]);
+            document.body.classList.add('ptr-loading');
+            var cb = function() {
+                setTimeout(function(){
+                    document.body.classList.remove('ptr-loading');
+                    document.body.classList.add('ptr-reset');
+                    setTimeout(function() {
+                        document.body.classList.remove('ptr-reset');
+                    }, 250);
+                }, 1000);
+            };
+            return app.update(cb, cb);
+        }
 
         if(!app.pages.hasOwnProperty(page)){
             page = 'home';
@@ -724,6 +794,77 @@ var app = {
 
         // Navigate to search result page
         window.location.hash = "#"+id;
+    },
+
+    flash: function(message, type) {
+        var elements = document.getElementsByClassName("momo-flash-messages");
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].innerHTML = "";
+        }
+        setTimeout(function(){
+            var elements = document.getElementsByClassName("momo-flash-messages");
+            for (var i = 0; i < elements.length; i++) {
+                elements[i].innerHTML += tmpl('momo-flash-message-tmpl', { 
+                    message: message,
+                    type: type ? type : 'info'  
+                });
+            }
+        }, 200);
+    },
+    
+    update: function( resolve, reject ) {
+        var els = document.getElementsByTagName("a"),
+          els_length = els.length;
+        for (var i = 0, l = els_length; i < l; i++) {
+            var el = els[i];
+            if (el.href.split("#")[1] === 'momo-update') {
+                el.classList.add('disabled');
+            }
+        }
+
+        app.loadManifest(function(){
+            app.loadAssets(function(){
+                app.reset();
+                if(typeof resolve === 'function')
+                    resolve();
+            }, reject);
+        }, reject);
+    },
+
+    reset: function(){
+        for(var page in app.pages){
+            if(typeof app.pages[page].search == 'undefined'){
+                delete app.pages[page];
+            document.getElementById("momo-pages").removeChild(
+                document.getElementById(page)
+            );
+            }
+        }
+        // Regiter pages tree
+        app.menu = [];
+        app.manifest.id = 'home';
+        app.registerPage(app.manifest);
+        // Render every page
+        for(var page in app.pages){
+            var $page = document.getElementById(page);
+            if(!$page){
+                $page = document.createElement('div');
+                $page.id = app.pages[page].id;
+                $page.className = "momo-page";
+                document.getElementById('momo-pages').appendChild($page);
+            }
+        }
+
+        app.utils.setLoadingMsg("Mise à jour effectuée !");
+
+        if(typeof app.pages[app.current_page].search != 'undefined'){
+            app.search(app.current_query);
+        } else {
+            app.navigate(app.current_page);
+        }
+
+        localStorage.setItem('momo-manifest-mtime', app.manifestMtime);
+        localStorage.setItem('momo-assets-mtime', app.assetsMtime);
     },
 
     // Various Javascript Helpers
@@ -872,6 +1013,22 @@ var app = {
                 newQueryString += parameterName + "=" + (parameterValue?parameterValue:'');
             }
             return urlParts[0] + newQueryString + urlhash;
+        },
+
+        getModifiedTime: function(url, callback) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('HEAD', url, true); // use HEAD - we only need the headers
+          xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+              var mtime = new Date(xhr.getResponseHeader('Last-Modified'));
+              if (mtime.toString() === 'Invalid Date') {
+                callback(); // dont want to return a bad date
+              } else {
+                callback(mtime);
+              }
+            }
+          }
+          xhr.send();
         }
     }
 };
