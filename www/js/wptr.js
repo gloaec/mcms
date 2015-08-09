@@ -81,17 +81,22 @@ var WebPullToRefresh = (function () {
         }
 
 
-		var h = new Hammer( options.contentEl, { touchAction: 'pan-y' } );
+		options.h = new Hammer( options.contentEl, { touchAction: 'pan-y' } );
 
-		h.get( 'pan' ).set( { direction: Hammer.DIRECTION_ALL } );
+		options.h.get( 'pan' ).set( { direction: Hammer.DIRECTION_ALL } );
 
-		h.on( 'panstart', _panStart );
-		h.on( 'pandown', _panDown );
-		h.on( 'panup', _panUp );
-		h.on( 'panright', _panRight );
-		h.on( 'panleft', _panLeft );
-		h.on( 'panend', _panEnd );
+		options.h.on( 'panstart', _panStart );
+		options.h.on( 'pandown', _panDown );
+		options.h.on( 'panup', _panUp );
+		options.h.on( 'panright', _panRight );
+		options.h.on( 'panleft', _panLeft );
+		options.h.on( 'panend', _panEnd );
 	};
+
+    var destroy = function() {
+        if(options.h)
+            options.h.destroy();
+    };
 
 	/**
 	 * Determine whether pan events should apply based on scroll position on panstart
@@ -297,7 +302,8 @@ var WebPullToRefresh = (function () {
 	};
 
 	return {
-		init: init
+		init: init,
+        destroy: destroy
 	}
 
 })();

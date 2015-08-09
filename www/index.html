@@ -41,6 +41,13 @@
             </div>
         </div>
 
+        <script type="text/x-tmpl" id="momo-first-launch-tmpl">
+            <h1>Première utilisation</h1
+            <p>
+                Tirez vers le bas pour mettre à jour l'application
+            </p>
+        </script>
+
         <script type="text/x-tmpl" id="momo-icon-tmpl">
             {% if(o.icon.startsWith('http://') ||
                   o.icon.startsWith('https://') ||
@@ -164,7 +171,7 @@
 
         <!-- Flash message template -->
         <script type="text/x-tmpl" id="momo-flash-message-tmpl">
-            <div class="alert alert-{%= o.type %}">
+            <div class="alert alert-{%= o.type %} pt-page-rotateRoomBottomIn">
                 {%# o.message %}
             </div>
         </script>
