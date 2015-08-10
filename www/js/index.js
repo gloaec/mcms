@@ -233,16 +233,20 @@ var app = {
 
                         // Store manifest if parsable
                         localStorage.setItem("momo-manifest", manifestResponse);
+
+                        // Reload if new manifest url
+                        if(url != app.manifest.meta.manifestUrl){
+                            app.loadManifest(resolve, reject);
+                        } else  {
+                            if(typeof resolve === "function")
+                                resolve();
+                        }
                     } catch(e) {
                         if(DEBUG) console.log('Cannot parse application manifest '+url);
-                    }
+                        app.flash('Le manifest JSON comporte des erreurs', 'danger');
+                        if(typeof reject === "function")
+                            reject();
 
-                    // Reload if new manifest url
-                    if(url != app.manifest.meta.manifestUrl){
-                        app.loadManifest(resolve, reject);
-                    } else  {
-                        if(typeof resolve === "function")
-                            resolve();
                     }
                 });
 
@@ -421,7 +425,8 @@ var app = {
             document.getElementsByTagName("head")[0].appendChild(link);
             document.getElementsByTagName("head")[0].appendChild(script);
 
-            resolve();
+            if(typeof resolve === 'function')
+                resolve();
         };
 
         if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
@@ -453,9 +458,12 @@ var app = {
     
         // Render Homepage
         app.render(app.manifest);
+
+        // Navigate to home
         app.navigate('home', false, function(){
-            if(typeof resolve == 'function')
-                resolve();
+
+            // Append assets
+            app.appendAssets(resolve, reject);
         });
 
         // Listen for search form submission
@@ -873,6 +881,8 @@ var app = {
 
         app.loadManifest(
             function(){
+                localStorage.setItem('momo-manifest-mtime', app.manifestMtime);
+                localStorage.setItem('momo-assets-mtime', app.assetsMtime);
                 loadAssets(resolve, reject);
             },
             function(){
@@ -916,9 +926,6 @@ var app = {
         } else {
             app.navigate(app.current_page);
         }
-
-        localStorage.setItem('momo-manifest-mtime', app.manifestMtime);
-        localStorage.setItem('momo-assets-mtime', app.assetsMtime);
     },
 
     // Various Javascript Helpers

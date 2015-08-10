@@ -69,17 +69,17 @@ var WebPullToRefresh = (function () {
 		}
 
         var iframes = options.contentEl.getElementsByTagName('iframe');
+        var overlays = options.contentEl.getElementsByClassName('momo-frame-overlay');
+        var wrappers = options.contentEl.getElementsByClassName('momo-frame-wrapper');
 
-        if(iframes.length > 0){
-            var iframe = iframes[0];
-            var oE1 = iframe.contentWindow;
-            if(window.pageYOffset==undefined)
-            {   
-              oE1= (oE1.document.documentElement) ? oE1.document.documentElement : oE1=document.body; 
-            }
-            options.contentEl = iframe;
+        if(iframes.length > 0) {
+            options.iframe = iframes[0];
+            options.overlay = overlays[0];
+            options.wrapper = wrappers[0];
+            // FIXME; Touch events on iframe (IMPOZZZZIBLE !!!)
+            //options.overlay.addEventListener('touchstart', _onTouchStart);
+            //options.overlay.addEventListener('touchend', _onTouchEnd);
         }
-
 
 		options.h = new Hammer( options.contentEl, { touchAction: 'pan-y' } );
 
@@ -96,6 +96,98 @@ var WebPullToRefresh = (function () {
     var destroy = function() {
         if(options.h)
             options.h.destroy();
+    };
+
+    var sendTouchEvent = function(element, eventType, touchList) {
+        var touchEvent = document.createEvent("TouchEvent");
+
+        var canBubble = true;
+        var cancelable = true;
+        var view = window;
+        var detail = null;    // not sure what this is
+        var screenX = 0;
+        var screenY = 0;
+        var clientX = 0;
+        var clientY = 0;
+        var ctrlKey = false;
+        var altKey = false;
+        var shiftKey = false;
+        var metaKey = false;
+        var touches = touchList;
+        var targetTouches = touchList;
+        var changedTouches = touchList;
+        var scale = 1;
+        var rotation = 0;
+
+        if (true /*browser.usesAndroidInitTouchEventParameterOrder()*/) {
+            touchEvent.initTouchEvent(
+                touches, targetTouches, changedTouches,
+                eventType,
+                view,
+                screenX, screenY,
+                clientX, clientY,
+                ctrlKey, altKey, shiftKey, metaKey
+            );
+        }
+        else {
+            touchEvent.initTouchEvent(
+                eventType,
+                canBubble,
+                cancelable,
+                view,
+                detail,
+                screenX, screenY,
+                clientX, clientY,
+                ctrlKey, altKey, shiftKey, metaKey,
+                touches, targetTouches, changedTouches,
+                scale, rotation
+            );
+        }
+
+        var eventData = new jQuery.Event("event");
+        eventData.type = eventType;
+        eventData.originalEvent = touchEvent;
+        $(element).trigger(eventData);
+    };
+
+    var _onTouchStart = function(e){
+        bodyClass.add( 'disable-overlay' );
+        //e.preventDefault();
+        //e.stopImmediatePropagation();
+        var _e = TouchEvent.create(e);
+        app.utils.extend(_e, {
+          originalEvent : {
+            touches: e.touches,
+            changedTouches: e.changedTouches,
+            targetTouches: e.targetTouches,
+            pageX: e.pageX,
+            pageY: e.pageY
+          }
+        });
+        options.overlay.removeEventListener('touchstart', _onTouchStart);
+        //options.iframe.dispatchEvent(_e);
+        try {
+        sendTouchEvent(options.iframe.contentWindow, 'touchstart', e.targetTouches);
+        } catch(e) {}
+        options.overlay.addEventListener('touchstart', _onTouchStart);
+    };
+
+    var _onTouchEnd = function(e){
+        //e.preventDefault();
+        //e.stopImmediatePropagation();
+        var _e = TouchEvent.create(e);
+        _e.touches = e.touches;
+        _e.changedTouches = e.changedTouches;
+        _e.targetTouches = e.targetTouches;
+        _e.pageX = e.pageX;
+        _e.pageY = e.pageY;
+        options.overlay.removeEventListener('touchend', _onTouchEnd);
+        //options.iframe.dispatchEvent(_e);
+        try {
+        sendTouchEvent(options.iframe.contentWindow, 'touchend', e.targetTouches);
+        } catch(e) {}
+        options.overlay.addEventListener('touchend', _onTouchEnd);
+        bodyClass.remove( 'disable-overlay' );
     };
 
 	/**

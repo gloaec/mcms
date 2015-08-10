@@ -81,8 +81,27 @@ body {
     z-index: 1;
     overflow: hidden;
 }
+.momo-page iframe {
+}
 .momo-frame-wrapper {
     /*height: 100% !important;*/
+    display: block;
+}
+.momo-frame-overlay {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom:60px;
+    right: 0;
+    width:100%;
+    opacity: .5;
+    background: #FE007F;
+    z-index: 99;
+    pointer-events: auto;
+}
+.disable-overlay .momo-frame-overlay {
+    display: none;
 }
 .momo-page-wrapper:after {
     content: " ";

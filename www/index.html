@@ -199,6 +199,7 @@
 
                 {% if(o.url){ %}
                     <iframe src="{%= o.url %}"></iframe>
+                    <!--div class="momo-frame-overlay"></div-->
                 {% } %}
        
                 {% if(o.pages){ %}
@@ -257,6 +258,8 @@
         </script>
 
         <script type="text/javascript" src="cordova.js"></script>
+        <!--script type="text/javascript" src="js/jquery-1.11.3.min.js"></script-->
+        <!--script type="text/javascript" src="js/createTouchEvent.js"></script-->
         <script type="text/javascript" src="js/polyfill/Promise.min.js"></script>
         <script type="text/javascript" src="js/polyfill/transition-end.min.js"></script>
         <script type="text/javascript" src="js/tmpl.min.js"></script>
