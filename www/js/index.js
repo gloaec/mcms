@@ -46,7 +46,7 @@ var app = {
             'assetsUrl': 'assets.zip',
             'updateFreq': 0,
             'content': tmpl('momo-first-launch-tmpl'),
-            'titlePersistant': true,
+            'titlePersitent': true,
             'titleSeparator': "<br>"
         }
     },
