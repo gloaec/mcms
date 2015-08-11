@@ -73,23 +73,23 @@
             <div class="parent-navbar-brand">
             <span class="navbar-brand" href="#home">
                 <span class="momo-icon">
-                    {% var icon = (o.meta.titlePersistant || o.id == 'home') ? o.meta.icon : o.icon || o.meta.icon; %}
+                    {% var icon = (o.titlePersistant || o.meta.titlePersistant || o.id == 'home') ? o.meta.icon : o.icon || o.meta.icon; %}
                     {% if(icon){ %}
                         {%# tmpl('momo-icon-tmpl', { icon: icon, size: 20, header: true }) %}
                     {% } %}
                 </span>
                 <span class="momo-title">
-                    {% if(o.meta.titlePersistant || o.id == 'home'){ %}
+                    {% if(o.titlePersistant || o.meta.titlePersistant || o.id == 'home'){ %}
                         {%= o.meta.title %}
-                        {%# o.meta.titleSeparator %}
+                        {%# (o.titleSeparator || o.meta.titleSeparator) %}
                         <small>
                             {% if(o.meta.icon && o.icon){ %}
                               {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20, header: true }) %}
                             {% } %}
-                            {%= o.title %}
+                            {%# o.title %}
                         </small>
                     {% } else { %}
-                        {%= o.title || o.meta.title %}
+                        {%# (o.title || o.meta.title) %}
                     {% } %}
                 </span>
             </span>
@@ -154,7 +154,7 @@
                 {% if(o.icon){ %}
                     {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
                 {% } %}
-                {%= o.title %}
+                {%# o.title %}
                 </span>
                 {% if(o.external) { %}
                     <i class="fa fa-external-link pull-right"></i>
@@ -175,7 +175,7 @@
                             {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 42 }) %}
                         </div>
                     {% } %}
-                    {%= o.title %}
+                    {%# o.title %}
                 </a>
             </div>
         </script>

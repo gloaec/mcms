@@ -483,7 +483,7 @@ var app = {
             data = app.utils.extend(app.defaultPage, data);
 
             // Generate a page ID
-            var id = data.id = data.id ? data.id : (data.title ? app.utils.hyphenate(data.title) : '_' + Math.random().toString(36).substr(2, 9));
+            var id = data.id = data.id ? data.id : (data.title ? app.utils.hyphenate(data.title.stripTags()) : '_' + Math.random().toString(36).substr(2, 9));
 
             // Make sure id is unique
             var i = 1;
@@ -1129,6 +1129,11 @@ if (typeof String.prototype.startsWith != 'function') {
 if (typeof String.prototype.endsWith != 'function') {
     String.prototype.endsWith = function (str){
         return this.slice(-str.length) == str;
+    };
+}
+if (typeof String.prototype.stripTags != 'function') {
+    String.prototype.stripTags = function (){
+        return this.replace(/(<([^>]+)>)/ig,"");
     };
 }
 if (typeof String.prototype.isImage != 'function') {
