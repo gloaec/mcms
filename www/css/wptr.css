@@ -7,10 +7,11 @@
 	z-index: 10;
 	text-align: center;
 	height: 50px;
-    background: #3e3f3a;
+   /* background: #3e3f3a;*/
 }
 
 #ptr .genericon {
+    display: none;
 	opacity: .6;
 	font-size: 34px;
 	width: auto;
@@ -19,6 +20,9 @@
 	-webkit-transform: rotate(90deg);
 	transform: rotate(90deg);
 	margin-top: 5px;
+}
+.ptr-pulling #ptr .genericon {
+    display: block;
 }
 .ptr-refresh #ptr .genericon {
 	-webkit-transform: rotate(270deg);
@@ -113,7 +117,7 @@
 .ptr-loading .momo-page {
 	/*-webkit-transform: translate3d( 0, 50px, 0 );
 	transform: translate3d( 0, 50px, 0 );*/
-    top: 110px;
+    top: 115px;
 	transition: all .25s ease;
 }
 .ptr-reset #ptr {
@@ -126,6 +130,6 @@
 .ptr-loading #ptr {
 	/*-webkit-transform: translate3d( 0, 50px, 0 );
 	transform: translate3d( 0, 50px, 0 );*/
-    top: 60px;
+    top: 65px;
 	transition: all .25s ease;
 }

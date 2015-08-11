@@ -4,3 +4,48 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, .3);
     margin: 15px 0;
 }
+
+.btn-cadoles {
+    background: #2A80AF;
+    color: #FFF;
+}
+.btn-cadoles:hover {
+    background: #1A709F;
+}
+.btn-divia {
+    background: #CA0083;
+    color: #FFF;
+}
+.btn-divia:hover {
+    background: #D00187;
+}
+
+.navbar-default {
+    background-color: rgba(49, 50, 45, .95);
+    border-color: #3e3f3a;
+}
+
+#home {
+    background: #93c54b;
+    
+    background: -webkit-linear-gradient(0deg, #348F50 10%, #56B4D3 90%); /* Chrome 10+, Saf5.1+ */
+    background:    -moz-linear-gradient(0deg, #348F50 10%, #56B4D3 90%); /* FF3.6+ */
+    background:     -ms-linear-gradient(0deg, #348F50 10%, #56B4D3 90%); /* IE10 */
+    background:      -o-linear-gradient(0deg, #348F50 10%, #56B4D3 90%); /* Opera 11.10+ */
+    background:         linear-gradient(0deg, #348F50 10%, #56B4D3 90%); /* W3C */
+        
+    background-image: url("bg.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center; 
+}
+#dijon {
+    color: #FFF;
+    background: rgba(49, 50, 45, .95);
+}
+#dijon .navbar-inverse,
+#dijon .navbar-inverse .btn,
+#home .navbar-inverse,
+#home .navbar-inverse .btn {
+    background: none;
+}

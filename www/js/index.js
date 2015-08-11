@@ -40,11 +40,14 @@ var app = {
     manifest: {
         meta: {
             'title': 'Momo Application',
+            'icon': 'icon.png',
             'contact': 'contact@cadoles.com',
             'manifestUrl': 'index.json',
             'assetsUrl': 'assets.zip',
             'updateFreq': 0,
-            'content': tmpl('momo-first-launch-tmpl')
+            'content': tmpl('momo-first-launch-tmpl'),
+            'titlePersistant': true,
+            'titleSeparator': "<br>"
         }
     },
 
@@ -168,7 +171,7 @@ var app = {
                         reject();
                 } else {
                     if(updateAvailable){
-                        app.flash(tmpl('momo-update-available-tmpl', {}), 'success');
+                        app.flash(tmpl('momo-update-available-tmpl', { mtime: app.utils.formatDate(mtime) }), 'success');
                         app.utils.setLoadingMsg("Mise à jour disponible !");
                     } else {
                         app.utils.setLoadingMsg("Aucunes nouvelles mises à jour");
@@ -743,6 +746,11 @@ var app = {
                 }, 1000);
             };
             return app.update(cb, cb);
+            return window.history.back();
+        } else
+        if(page == 'momo-blank'){
+            return window.location.replace(app.hashHistory[app.hashHistory.length-1]);
+            return window.history.back();
         }
 
         if(!app.pages.hasOwnProperty(page)){
@@ -928,8 +936,14 @@ var app = {
         }
     },
 
+
     // Various Javascript Helpers
     utils: {
+
+        removeElement: function($el){
+            $el.parentElement.removeChild($el);
+            return false;
+        },
 
         setLoadingMsg: function(text){
             var elements = document.getElementsByClassName("momo-loading-text");
@@ -1090,17 +1104,51 @@ var app = {
             }
           }
           xhr.send();
+        },
+
+        formatDate: function(date){
+            var d = date,
+            minutes = d.getMinutes(),//.toString().length == 1 ? '0'+d.getMinutes() : d.getMinutes(),
+            hours = d.getHours(),//.toString().length == 1 ? '0'+d.getHours() : d.getHours(),
+            //ampm = d.getHours() >= 12 ? 'pm' : 'am',
+            //months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+            //days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            months = ['Janvier','Février','Mars','Avril','Mai','Juin','Jullet','Août','Septempbre','Octobre','Novembre','Décembre'],
+            days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+            //return days[d.getDay()]+' '+months[d.getMonth()]+' '+d.getDate()+' '+d.getFullYear()+' '+hours+':'+minutes;//+ampm;
+            return days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear()+' '+hours+':'+minutes;//+ampm;
         }
     }
 };
 
 if (typeof String.prototype.startsWith != 'function') {
-  String.prototype.startsWith = function (str){
-    return this.slice(0, str.length) == str;
-  };
+    String.prototype.startsWith = function (str){
+        return this.slice(0, str.length) == str;
+    };
 }
 if (typeof String.prototype.endsWith != 'function') {
-  String.prototype.endsWith = function (str){
-    return this.slice(-str.length) == str;
-  };
+    String.prototype.endsWith = function (str){
+        return this.slice(-str.length) == str;
+    };
+}
+if (typeof String.prototype.isImage != 'function') {
+    String.prototype.isImage = function (){
+        return this.endsWith('.png') ||
+            this.endsWith('.svg') ||
+            this.endsWith('.ico') ||
+            this.endsWith('.jpeg') ||
+            this.endsWith('.jpg');
+    };
+}
+if (typeof String.prototype.isUrl != 'function') {
+    String.prototype.isUrl = function (){
+        return this.startsWith('http://') ||
+            this.startsWith('https://') ||
+            this.startsWith('file://');
+    };
+}
+if (typeof String.prototype.isFramable != 'function') {
+    String.prototype.isFramable = function (){
+        return this.isImage() || this.isUrl();
+    };
 }
