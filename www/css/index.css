@@ -237,6 +237,18 @@ img {
 .navbar {
     border: 0;
 }
+
+.navbar code {
+    color: #79a736;
+    background-color: #222;
+    vertical-align: bottom;
+}
+.navbar .navbar-btn.pull-left {
+    padding: 0 14px 0 7px;
+}
+.navbar .navbar-btn.pull-right {
+    padding: 0 7px 0 14px;
+}
 .navbar .col-xs-8 {
     display: table;
 }
