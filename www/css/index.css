@@ -81,8 +81,56 @@ body {
     z-index: 1;
     overflow: hidden;
 }
+.momo-image-viewer {
+  z-index: 99999;
+  background-color: black;
+  background-image: url(...);
+  background-size: contain;
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  width: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #FFF;
+}
+.momo-image-viewer .momo-page-content-parent {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: -moz-linear-gradient(top,  rgba(0,0,0,0) 0%, rgba(0,0,0,0) 1%, rgba(0,0,0,0.9) 50%, rgba(0,0,0,1) 99%, rgba(0,0,0,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0)), color-stop(1%,rgba(0,0,0,0)), color-stop(50%,rgba(0,0,0,0.9)), color-stop(99%,rgba(0,0,0,1)), color-stop(100%,rgba(0,0,0,1))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 1%,rgba(0,0,0,0.9) 50%,rgba(0,0,0,1) 99%,rgba(0,0,0,1) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 1%,rgba(0,0,0,0.9) 50%,rgba(0,0,0,1) 99%,rgba(0,0,0,1) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 1%,rgba(0,0,0,0.9) 50%,rgba(0,0,0,1) 99%,rgba(0,0,0,1) 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 1%,rgba(0,0,0,0.9) 50%,rgba(0,0,0,1) 99%,rgba(0,0,0,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#000000',GradientType=0 ); /* IE6-9 */
+}
+.momo-page iframe {
+}
 .momo-frame-wrapper {
     /*height: 100% !important;*/
+    display: block;
+}
+.momo-frame-overlay {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom:60px;
+    right: 0;
+    width:100%;
+    opacity: .5;
+    background: #FE007F;
+    z-index: 99;
+    pointer-events: auto;
+}
+.disable-overlay .momo-frame-overlay {
+    display: none;
 }
 .momo-page-wrapper:after {
     content: " ";
@@ -169,6 +217,9 @@ body {
     zoom: 1; */
 }
 
+img {
+    vertical-align: bottom;
+}
 
 .momo-page-current,
 .no-js .pt-page {
@@ -185,6 +236,18 @@ body {
 }
 .navbar {
     border: 0;
+}
+
+.navbar code {
+    color: #79a736;
+    background-color: #222;
+    vertical-align: bottom;
+}
+.navbar .navbar-btn.pull-left {
+    padding: 0 14px 0 7px;
+}
+.navbar .navbar-btn.pull-right {
+    padding: 0 7px 0 14px;
 }
 .navbar .col-xs-8 {
     display: table;

@@ -25,6 +25,9 @@
         <meta charset="utf-8" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="msapplication-tap-highlight" content="no" />
+    <meta http-Equiv="Cache-Control" Content="no-cache" />
+    <meta http-Equiv="Pragma" Content="no-cache" />
+    <meta http-Equiv="Expires" Content="0" />
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, target-densitydpi=medium-dpi, user-scalable=0" />
         <link rel="stylesheet" type="text/css" href="css/index.css" />
@@ -49,17 +52,12 @@
         </script>
 
         <script type="text/x-tmpl" id="momo-icon-tmpl">
-            {% if(o.icon.startsWith('http://') ||
-                  o.icon.startsWith('https://') ||
-                  o.icon.startsWith('file://') ||
-                  o.icon.endsWith('.png') ||
-                  o.icon.endsWith('.svg') ||
-                  o.icon.endsWith('.ico') ||
-                  o.icon.endsWith('.jpeg') ||
-                  o.icon.endsWith('.jpg')){ %}
-                <img src="{%= o.icon %}" height="{%= o.size %}" width="{%= o.size %}" />
-            {% } else { %}
-                <i class="fa fa-fw {%= o.icon %} {% if(o.size > 20){ %} fa-3x {% } %}"></i>
+            {% if(o.icon){ %}
+                {% if(o.icon.isFramable()){ %}
+                    <img src="{%= o.icon %}" height="{%= o.size %}" width="{%= o.size %}" />
+                {% } else { %}
+                    <i class="fa fa-fw {%= o.icon %} {% if(o.size > 20){ %} fa-3x {% } %}"></i>
+                {% } %}
             {% } %}
         </script>
 
@@ -74,13 +72,29 @@
             </div>
             <div class="parent-navbar-brand">
             <span class="navbar-brand" href="#home">
+                {% if(!(o.titlePersistent || o.meta.titlePersistent || o.id == 'home')){ %}
+                    {%# (o.titleSeparator || o.meta.titleSeparator) %}
+                {% } %}
                 <span class="momo-icon">
-                    {% var icon = o.icon || o.meta.icon; %}
+                    {% var icon = (o.titlePersistent || o.meta.titlePersistent || o.id == 'home') ? o.meta.icon : o.icon || o.meta.icon; %}
                     {% if(icon){ %}
                         {%# tmpl('momo-icon-tmpl', { icon: icon, size: 20, header: true }) %}
                     {% } %}
                 </span>
-                <span class="momo-title">{%= o.title || o.meta.title %}</span>
+                <span class="momo-title">
+                    {% if(o.titlePersistent || o.meta.titlePersistent || o.id == 'home'){ %}
+                        {%= o.meta.title %}
+                        {%# (o.titleSeparator || o.meta.titleSeparator) %}
+                        <small>
+                            {% if(o.meta.icon && o.icon){ %}
+                              {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20, header: true }) %}
+                            {% } %}
+                            {%# o.title %}
+                        </small>
+                    {% } else { %}
+                        {%# (o.title || o.meta.title) %}
+                    {% } %}
+                </span>
             </span>
         </div>
         </script>
@@ -139,16 +153,34 @@
 
         <script type="text/x-tmpl" id="momo-list-item-tmpl">
             <a href="#{%= o.id %}" class="{% if(!o.header){ %} list-group-item {% } %} clearfix">
-                <span class="pull-left">
-                {% if(o.icon){ %}
-                    {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
-                {% } %}
-                {%= o.title %}
-                </span>
-                {% if(o.external) { %}
-                    <i class="fa fa-external-link pull-right"></i>
-                {% } else { %}
-                    <i class="fa fa-angle-right pull-right"></i>
+                {% if(o.header){ %}
+                    <span class="pull-left">
+                        {% if(o.icon){ %}
+                            {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
+                            <span class="hidden-sm hidden-md">
+                                {%# o.title %}
+                            </span>
+                        {% } else { %}
+                            {%# o.title %}
+                        {% } %}
+                    </span>
+                    {% if(o.external) { %}
+                        <i class="fa fa-external-link pull-right hidden-sm hidden-md"></i>
+                    {% } else { %}
+                        <i class="fa fa-angle-right pull-right visible-xs-inline"></i>
+                    {% } %}
+                {% } else { %}
+                    <span class="pull-left">
+                        {% if(o.icon){ %}
+                            {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
+                        {% } %}
+                        {%# o.title %}
+                    </span>
+                    {% if(o.external) { %}
+                        <i class="fa fa-external-link pull-right"></i>
+                    {% } else { %}
+                        <i class="fa fa-angle-right pull-right"></i>
+                    {% } %}
                 {% } %}
             </a>
         </script>
@@ -164,7 +196,7 @@
                             {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 42 }) %}
                         </div>
                     {% } %}
-                    {%= o.title %}
+                    {%# o.title %}
                 </a>
             </div>
         </script>
@@ -172,33 +204,53 @@
         <!-- Flash message template -->
         <script type="text/x-tmpl" id="momo-flash-message-tmpl">
             <div class="alert alert-{%= o.type %} pt-page-rotateRoomBottomIn">
+                <a href="#momo-blank" onclick="app.utils.removeElement(this.parentElement);" class="pull-right">&times;</a>
+                {% if(o.type == "success"){ %}<i class="fa fa-fw fa-check"></i>
+                {% } else if(o.type == "info"){ %}<i class="fa fa-fw fa-info-circle"></i>
+                {% } else if(o.type == "warning"){ %}<i class="fa fa-fw fa-exclamation-triangle"></i>
+                {% } else if(o.type == "danger"){ %}<i class="fa fa-fw fa-exclamation-circle"></i>{% } %}
                 {%# o.message %}
+                <div class="clearfix"></div>
             </div>
         </script>
 
         <!-- Update availbable template -->
         <script type="text/x-tmpl" id="momo-update-available-tmpl">
-            <div class="clearfix">
-                <a href="#momo-update" class="btn btn-success pull-right">
-                   <i class="fa fa-download"></i>
-                   Mettre à jour
-                </a>
-                <strong>Une nouvelle version est disponible !</strong>
-            </div>
+            <a href="#momo-update" class="btn btn-success pull-right">
+               <i class="fa fa-download"></i>
+               Mettre à jour
+            </a>
+            <strong>Mise à jour disponible !</strong>
+            <p>
+               {%= o.mtime %}
+            </p>
+            <div class="clearfix"></div>
         </script>
 
         <!-- Page template -->
         <script type="text/x-tmpl" id="momo-page-tmpl">
+            {% var displayFooter = true; %}
 
-            <div class="{% if(o.url){ %}momo-frame-wrapper{% } else { %}momo-page-wrapper{% } %} clearfix">
-                <div class="momo-flash-messages"></div>
+            <div class="{% if(o.url){ %}{% } else { %}momo-page-wrapper{% } %} clearfix">
+
+                {% if(!(o.url && o.url.isImage())){ %}
+                    <div class="momo-flash-messages"></div>
+                    <div class="container-fluid">
+                        <section class="momo-page-content">{%# o.content %}</section>
+                    </div>
+                {% } else { %}
+                    <div class="momo-image-viewer" style="background-image: url('{%# o.url %}');">
+                        <div class="momo-flash-messages"></div>
+                        <div class="container-fluid momo-page-content-parent">
+                            <section class="momo-page-content">{%# o.content %}</section>
+                        </div>
+                    </div>
+                    {% displayFooter = false; %}
+                {% } %}
                        
-                <div class="container-fluid">
-                    <section class="momo-page-content">{%# o.content %}</section>
-                </div>
-
-                {% if(o.url){ %}
-                    <iframe src="{%= o.url %}"></iframe>
+                {% if(o.url && !o.url.isImage()){ %}
+                    <iframe src="{%= o.url %}" class="momo-iframe"></iframe>
+                    <!--div class="momo-frame-overlay"></div-->
                 {% } %}
        
                 {% if(o.pages){ %}
@@ -235,28 +287,32 @@
 
             </div>
   
-            <!-- Footer -->
-            <footer class="navbar navbar-inverse momo-footer">
-                <div class="container-fluid clearfix">
-                    <div class="row">
-                        <div class="col-xs-6 navbar-btn text-left">
-                            <a href="https://dev.entrouvert.org/projects/momo/"
-                                class="btn btn-success pull-left momo-repo" 
-                                target="_system"
-                                onclick="javascript:app.utils.onExternalLinkClick()">Momo repository</a>
-                        </div>
-                        <div class="col-xs-6 navbar-btn text-right">
-                            <a href="mailto:{%= o.meta.contact %}" 
-                                class="btn btn-success pull-right momo-contact">{%= o.meta.contact %}</a>
+            {% if(displayFooter){ %}
+                <!-- Footer -->
+                <footer class="navbar navbar-inverse momo-footer">
+                    <div class="container-fluid clearfix">
+                        <div class="row">
+                            <div class="col-xs-6 navbar-btn text-left">
+                                <a href="https://dev.entrouvert.org/projects/momo/"
+                                    class="btn btn-success pull-left momo-repo" 
+                                    target="_system"
+                                    onclick="javascript:app.utils.onExternalLinkClick()">Momo repository</a>
+                            </div>
+                            <div class="col-xs-6 navbar-btn text-right">
+                                <a href="mailto:{%= o.meta.contact %}" 
+                                    class="btn btn-success pull-right momo-contact">{%= o.meta.contact %}</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </footer>
+                </footer>
+            {% } %}
 
 
         </script>
 
         <script type="text/javascript" src="cordova.js"></script>
+        <!--script type="text/javascript" src="js/jquery-1.11.3.min.js"></script-->
+        <!--script type="text/javascript" src="js/createTouchEvent.js"></script-->
         <script type="text/javascript" src="js/polyfill/Promise.min.js"></script>
         <script type="text/javascript" src="js/polyfill/transition-end.min.js"></script>
         <script type="text/javascript" src="js/tmpl.min.js"></script>
