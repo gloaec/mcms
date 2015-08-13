@@ -23,9 +23,11 @@
     <preference name="disable-cursor" value="false" />
     <preference name="android-minSdkVersion" value="10" />
     <preference name="android-installLocation" value="auto" />
-    <gap:plugin name="cordova-plugin-file" />
-    <gap:plugin name="cordova-plugin-file-transfer" />
-    <gap:plugin name="cordova-plugin-zip" />
+    <gap:plugin name="fi.avaus.cordova.file" />
+    <gap:plugin name="com.chanthu.evri.gcs-file-transfer" />
+    <gap:plugin name="org.chromium.zip" />
+    <gap:plugin name="com.indigoway.cordova.whitelist.whitelistplugin" />
+    <gap:plugin name="org.li8.inappbrowser" />
     <icon src="www/icon.png" />
     <!--icon gap:platform="android" gap:qualifier="ldpi" src="www/res/icon/android/icon-36-ldpi.png" />
     <icon gap:platform="android" gap:qualifier="mdpi" src="www/res/icon/android/icon-48-mdpi.png" />
