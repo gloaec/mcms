@@ -48,7 +48,8 @@ var app = {
             'content': tmpl('momo-first-launch-tmpl'),
             'titlePersitent': true,
             'titleSeparator': "<br>"
-        }
+        },
+        menu: []
     },
 
     // Default page attributes
@@ -56,7 +57,8 @@ var app = {
         colxs: 4,
         colsm: 3,
         colmd: 2,
-        collg: 1
+        collg: 1,
+        menu: []
     },
 
     // Misc Data
@@ -455,7 +457,7 @@ var app = {
         window.location.replace('#home');
 
         // Regiter pages tree
-        app.registerPage(app.manifest);
+        app.registerPage(app.manifest, app.defaultPage);
     
         // Render Homepage
         app.render(app.manifest);
@@ -473,7 +475,7 @@ var app = {
     },
 
     // Recursive function to index page from JSON Manifest
-    registerPage: function(data){
+    registerPage: function(data, parentPage){
 
         if(data instanceof Object){
 
@@ -493,18 +495,20 @@ var app = {
             app.pages[data.id] = data;
 
             // Register menu items
-            if(data.menu instanceof Array){
+            if(data.menu instanceof Array && data.menu.length > 0){
                 for(var i = 0; i < data.menu.length; i++){
                     var page = data.menu[i];
-                    app.menu[i] = app.registerPage(page, false);
+                    app.pages[data.id].menu[i] = app.registerPage(page, data);
                 }
+            } else {
+                app.pages[data.id].menu = parentPage.menu;
             }
 
             // Register hidden pages childrens
             if(data._pages instanceof Array){
                 for(var i = 0; i < data._pages.length; i++){
                     var page = data._pages[i];
-                    app.pages[data.id]._pages[i] = app.registerPage(page, false);
+                    app.pages[data.id]._pages[i] = app.registerPage(page, data);
                 }
             }
 
@@ -512,7 +516,7 @@ var app = {
             if(data.pages instanceof Array){
                 for(var i = 0; i < data.pages.length; i++){
                     var page = data.pages[i];
-                    app.pages[data.id].pages[i] = app.registerPage(page, false);
+                    app.pages[data.id].pages[i] = app.registerPage(page, data);
                 }
             }
 
@@ -520,7 +524,7 @@ var app = {
             if(data.seealso instanceof Array){
                 for(var i = 0; i < data.seealso.length; i++){
                     var page = data.seealso[i];
-                    app.pages[data.id].seealso[i] = app.registerPage(page, false);
+                    app.pages[data.id].seealso[i] = app.registerPage(page, data);
                 }
             }
 
@@ -545,14 +549,6 @@ var app = {
         // Render Main section
         var $main  = tmpl("momo-main-tmpl", data);
         document.getElementById('momo-main').innerHTML = $main;
-
-        // Render every menu items
-        for(var i in app.menu){
-            var $menuItem = document.createElement('li');
-            var data = app.utils.extend(app.pages[app.menu[i]], { header: true });
-            $menuItem.innerHTML = tmpl("momo-list-item-tmpl", data);
-            document.getElementById('momo-menu').appendChild($menuItem);
-        }
 
         // Render navigation
         app.nav = responsiveNav(".momo-nav-collapse", { // Selector
@@ -590,6 +586,16 @@ var app = {
     renderPage: function(page){
         if(page instanceof Object){
             if(DEBUG) console.log('render page '+JSON.stringify(page));
+
+            // Render every menu items
+            document.getElementById('momo-menu').innerHTML = "";
+
+            for(var i in page.menu){
+                var $menuItem = document.createElement('li');
+                var data = app.utils.extend(app.pages[page.menu[i]], { header: true });
+                $menuItem.innerHTML = tmpl("momo-list-item-tmpl", data);
+                document.getElementById('momo-menu').appendChild($menuItem);
+            }
 
             // Get data to display
             var data = app.utils.extend(page, {meta: app.manifest.meta});
@@ -812,7 +818,8 @@ var app = {
             content: results.length ? null : '<div class="well text-center text-muted">Aucun resultat</div>',
             pages: results.map(function(item){
                 return item.ref;
-            })
+            }),
+            menu: app.pages[app.current_page].menu
         };
 
         var $page = document.getElementById(id);
@@ -827,7 +834,7 @@ var app = {
         }
 
         // Render page
-        $page.innerHTML = app.renderPage(app.pages[id]);
+        $page.innerHTML = app.renderPage(app.pages[id], app.pages[app.current_page]);
 
         // Navigate to search result page
         window.location.hash = "#"+id;
