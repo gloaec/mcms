@@ -32,7 +32,7 @@ If plugin registry server seems to be down :'( use git instead ;)
 
     phonegap plugin add https://github.com/apache/cordova-plugin-file.git
     phonegap plugin add https://github.com/apache/cordova-plugin-file-transfer.git
-    phonegap plugin add https://github.com/apache/cordova-plugin-zip.git
+    phonegap plugin add https://github.com/MobileChromeApps/cordova-plugin-zip.git
     phonegap plugin add https://github.com/apache/cordova-plugin-whitelist.git
     phonegap plugin add https://github.com/apache/cordova-plugin-inappbrowser.git # optional
 
