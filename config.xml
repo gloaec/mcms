@@ -23,10 +23,10 @@
     <preference name="disable-cursor" value="false" />
     <preference name="android-minSdkVersion" value="10" />
     <preference name="android-installLocation" value="auto" />
-    <plugin name="org.apache.cordova.file" version="1.3.1" />
-    <plugin name="org.apache.cordova.file-transfer" version="0.4.6" />
-    <plugin name="org.chromium.zip" version="2.1.0" />
-    <plugin name="org.apache.cordova.inappbrowser" version="0.5.2" />
+    <gap:plugin name="org.apache.cordova.file" version="1.3.1" />
+    <gap:plugin name="org.apache.cordova.file-transfer" version="0.4.6" />
+    <gap:plugin name="org.chromium.zip" version="2.1.0" />
+    <gap:plugin name="org.apache.cordova.inappbrowser" version="0.5.2" />
     <!--plugin name="fi.avaus.cordova.file" />
     <plugin name="com.chanthu.evri.gcs-file-transfer" />
     <plugin name="org.chromium.zip" />
