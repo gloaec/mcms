@@ -327,53 +327,51 @@ var app = {
                 var uri = encodeURI(app.manifest.meta.assetsUrl);
                 var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
                 
-                zip.unzip(uri, rootPath, 
-                // Success callback
-                function(ret){
-                    app.utils.setLoadingMsg("Téléchargement des assets - 100%");
-                    if(ret == 0) {
-                        if(typeof resolve === 'function')
-                            resolve();
-                    } else 
-                    if(ret == -1) {
-                        if(typeof reject === 'function')
-                            reject();
-                    }
-                },
-                // Progress callback
-                function(e){
-                    var progress = Math.round((e.loaded / e.total) * 100);
-                    app.utils.setLoadingMsg("Téléchargement des assets - "+progress+"%");
-                });
 
                 // Fetch Assets Zip Archive
-                //fileTransfer.download(
-                //    // Source
-                //    uri, 
-                //    // Destination
-                //    filePath, 
-                //    // Success callback 
-                //    function(entry) {
-                //        app.utils.setLoadingMsg("Extraction de la mise à jour");
-                //        // Unzip Assets
-                //        zip.unzip(filePath, rootPath, function(){
-                //            if(DEBUG) console.log('unzip success');
-                //            cb();
-                //        });
-                //    },
-                //    // Error callback
-                //    function(error) {
-                //        if(DEBUG) console.log("download error source " + error.source);
-                //        if(DEBUG) console.log("download error target " + error.target);
-                //        if(DEBUG) console.log("upload error code" + error.code);
-                //        cb();
-                //    },
-                //    // Misc
-                //    false,
-                //    {
-                //        headers: {}
-                //    }
-                //);
+                fileTransfer.download(
+                    // Source
+                    uri, 
+                    // Destination
+                    filePath, 
+                    // Success callback 
+                    function(entry) {
+                        app.utils.setLoadingMsg("Extraction de la mise à jour");
+                        // Unzip Assets
+                        zip.unzip(filePath, rootPath,
+                            // Success callback
+                            function(ret){
+                                if(DEBUG) console.log('unzip success');
+                                app.utils.setLoadingMsg("Téléchargement des assets - 100%");
+                                if(ret == 0) {
+                                    if(typeof resolve === 'function')
+                                        resolve();
+                                } else 
+                                if(ret == -1) {
+                                    if(typeof reject === 'function')
+                                        reject();
+                                }
+                            },
+                            // Progress callback
+                            function(e){
+                                var progress = Math.round((e.loaded / e.total) * 100);
+                                app.utils.setLoadingMsg("Téléchargement des assets - "+progress+"%");
+                            }
+                        );
+                    },
+                    // Error callback
+                    function(error) {
+                        if(DEBUG) console.log("download error source " + error.source);
+                        if(DEBUG) console.log("download error target " + error.target);
+                        if(DEBUG) console.log("upload error code" + error.code);
+                        cb();
+                    },
+                    // Misc
+                    false,
+                    {
+                        headers: {}
+                    }
+                );
             }, function(error){ 
                 if(DEBUG) console.error('Filesystem error');
                 app.utils.setLoadingMsg("Erreur du système de fichier");
