@@ -499,15 +499,38 @@
       /**
        * Closes the navigation when a link inside is clicked.
        */
+
+      toggleNavigation: function(){
+        if (isMobile) {
+          this.toggle();
+        }
+      },
+
       _closeOnNavClick: function () {
+        if (opts.closeOnNavClick) {
+          this.bindEvents();
+        }
+      },
+
+      unbindEvents: function () {
         if (opts.closeOnNavClick) {
           var links = nav.getElementsByTagName("a"),
             self = this;
           forEach(links, function (i, el) {
-            addEvent(links[i], "click", function () {
-              if (isMobile) {
-                self.toggle();
-              }
+            removeEvent(links[i], "click", function(){
+              self.toggleNavigation();
+            }, false);
+          });
+        }
+      },
+
+      bindEvents: function () {
+        if (opts.closeOnNavClick) {
+          var links = nav.getElementsByTagName("a"),
+            self = this;
+          forEach(links, function (i, el) {
+            addEvent(links[i], "click", function(){
+              self.toggleNavigation();
             }, false);
           });
         }

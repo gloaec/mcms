@@ -30,9 +30,6 @@ var ON_PULL = 'checkForUpdate'; // || 'update'
 // Application
 var app = {
 
-    // Menu Registry
-    menu: [],
-
     // Pages Registry
     pages: {},
 
@@ -550,22 +547,6 @@ var app = {
         var $main  = tmpl("momo-main-tmpl", data);
         document.getElementById('momo-main').innerHTML = $main;
 
-        // Render navigation
-        app.nav = responsiveNav(".momo-nav-collapse", { // Selector
-            animate: true, // Boolean: Use CSS3 transitions, true or false
-            transition: 284, // Integer: Speed of the transition, in milliseconds
-            //label: "Menu", // String: Label for the navigation toggle
-            //insert: "before", // String: Insert the toggle before or after the navigation
-            customToggle: "momo-menu-toggle", // Selector: Specify the ID of a custom toggle
-            closeOnNavClick: true, // Boolean: Close the navigation when one of the links are clicked
-            openPos: "relative", // String: Position of the opened nav, relative or static
-            navClass: "nav-collapse", // String: Default CSS class. If changed, you need to edit the CSS too!
-            navActiveClass: "active", // String: Class that is added to <html> element when nav is active
-            jsClass: "js", // String: 'JS enabled' class which is added to <html> element
-            init: function(){}, // Function: Init callback
-            open: function(){}, // Function: Open callback
-            close: function(){} // Function: Close callback
-        });
 
         // Render every page
         for(var page in app.pages){
@@ -596,6 +577,29 @@ var app = {
                 $menuItem.innerHTML = tmpl("momo-list-item-tmpl", data);
                 document.getElementById('momo-menu').appendChild($menuItem);
             }
+
+            // Render navigation
+            if(page.menu != app.pages[app.current_page].menu || !app.nav){
+                if(app.nav)
+                    app.nav.destroy();
+                app.nav = responsiveNav(".momo-nav-collapse", { // Selector
+                    animate: true, // Boolean: Use CSS3 transitions, true or false
+                    transition: 284, // Integer: Speed of the transition, in milliseconds
+                    //label: "Menu", // String: Label for the navigation toggle
+                    //insert: "before", // String: Insert the toggle before or after the navigation
+                    customToggle: "momo-menu-toggle", // Selector: Specify the ID of a custom toggle
+                    closeOnNavClick: true, // Boolean: Close the navigation when one of the links are clicked
+                    openPos: "relative", // String: Position of the opened nav, relative or static
+                    navClass: "nav-collapse", // String: Default CSS class. If changed, you need to edit the CSS too!
+                    navActiveClass: "active", // String: Class that is added to <html> element when nav is active
+                    jsClass: "js", // String: 'JS enabled' class which is added to <html> element
+                    init: function(){}, // Function: Init callback
+                    open: function(){}, // Function: Open callback
+                    close: function(){} // Function: Close callback
+                });
+            }
+            app.nav.unbindEvents();
+            app.nav.bindEvents();
 
             // Get data to display
             var data = app.utils.extend(page, {meta: app.manifest.meta});
@@ -869,14 +873,10 @@ var app = {
         var appendAssets = function(_resolve, _reject){
             app.appendAssets(
                 function(){
-                    app.reset();
-                    if(typeof _resolve === 'function')
-                        _resolve();
+                    app.reset(_resolve, _reject);
                 }, 
                 function(){
-                    app.reset();
-                    if(typeof _reject === 'function')
-                        _reject();
+                    app.reset(_reject, _reject);
                 }
             );
         };
@@ -887,7 +887,7 @@ var app = {
                     appendAssets(_resolve, _reject);       
                 },
                 function(){
-                    appendAssets(_resolve, _reject);       
+                    app.reset(_reject, _reject);
                 }
             );
         };
@@ -904,7 +904,7 @@ var app = {
         );
     },
 
-    reset: function(){
+    reset: function(resolve, reject){
         // Update Reminder
         clearTimeout(app.updateTimeout);
         app.updateTimeout = setTimeout( app.checkForLastUpdateCheck, app.manifest.meta.updateFreq );
@@ -912,15 +912,15 @@ var app = {
         for(var page in app.pages){
             if(typeof app.pages[page].search == 'undefined'){
                 delete app.pages[page];
-            document.getElementById("momo-pages").removeChild(
-                document.getElementById(page)
-            );
+                document.getElementById("momo-pages").removeChild(
+                    document.getElementById(page)
+                );
             }
         }
         // Regiter pages tree
-        app.menu = [];
         app.manifest.id = 'home';
-        app.registerPage(app.manifest);
+        app.registerPage(app.manifest, app.defaultPage);
+
         // Render every page
         for(var page in app.pages){
             var $page = document.getElementById(page);
@@ -932,7 +932,18 @@ var app = {
             }
         }
 
-        app.utils.setLoadingMsg("Mise à jour effectuée !");
+        // Check for url change in manifest
+        app.checkForUpdate(function(updateAvailable){
+            if(updateAvailable)
+                app.update(resolve, reject);
+            else
+                app.utils.setLoadingMsg("Mise à jour effectuée !");
+            if(typeof resolve === 'function')
+                resolve();
+        }, function(){
+            if(typeof reject === 'function')
+                reject();
+        });
 
         if(typeof app.pages[app.current_page].search != 'undefined'){
             app.search(app.current_query);
