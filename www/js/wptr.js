@@ -81,11 +81,11 @@ var WebPullToRefresh = (function () {
             //options.overlay.addEventListener('touchend', _onTouchEnd);
         }
 
-		options.h = new Hammer( options.contentEl, { touchAction: 'pan-y' } );
+		options.h = new Hammer( options.contentEl, { touchAction: 'auto' } );
 
 		options.h.get( 'pan' ).set( { direction: Hammer.DIRECTION_ALL } );
 
-		options.h.on( 'panstart', _panStart );
+		options.h.on( 'pandown panstart', _panStart );
 		options.h.on( 'pandown', _panDown );
 		options.h.on( 'panup', _panUp );
 		options.h.on( 'panright', _panRight );
@@ -119,7 +119,7 @@ var WebPullToRefresh = (function () {
         var scale = 1;
         var rotation = 0;
 
-        if (true /*browser.usesAndroidInitTouchEventParameterOrder()*/) {
+        if (false /*browser.usesAndroidInitTouchEventParameterOrder()*/) {
             touchEvent.initTouchEvent(
                 touches, targetTouches, changedTouches,
                 eventType,
@@ -200,7 +200,9 @@ var WebPullToRefresh = (function () {
 
 		if ( pan.startingPositionY === 0 ) {
 			pan.enabled = true;
-		}
+		} else {
+            pan.enabled = false;
+        }
 	};
 
 	/**
@@ -210,7 +212,7 @@ var WebPullToRefresh = (function () {
 	 */
 	var _panDown = function(e) {
 		if ( ! pan.enabled ) {
-			return;
+			return true;
 		}
 
 		e.preventDefault();
@@ -228,7 +230,7 @@ var WebPullToRefresh = (function () {
 	 */
 	var _panUp = function(e) {
 		if ( ! pan.enabled || pan.distance === 0 ) {
-			return;
+			return true;
 		}
 
 		e.preventDefault();
@@ -238,7 +240,6 @@ var WebPullToRefresh = (function () {
 		} else {
 			pan.distance = e.distance / options.resistance;
 		}
-
 		_setContentPan();
 		_setBodyClass();
 	};
@@ -310,7 +311,6 @@ var WebPullToRefresh = (function () {
 	 * @param {object} e - Event object
 	 */
 	var _panEnd = function(e) {
-
 		e.preventDefault();
 
 		//options.contentEl.style.transform = options.contentEl.style.webkitTransform = '';
@@ -318,6 +318,11 @@ var WebPullToRefresh = (function () {
         options.contentEl.style.top = "";//"110px";
         options.ptrEl.style.top = "";//60px";
 		bodyClass.remove( 'ptr-pulling' );
+
+		pan.distance = 0;
+		pan.distanceRight = 0;
+		pan.distanceLeft = 0;
+		pan.enabled = false;
 
 		if ( document.body.classList.contains( 'ptr-refresh' ) ) {
 			_doLoading();
@@ -328,11 +333,6 @@ var WebPullToRefresh = (function () {
 		} else {
 			_doReset();
 		}
-
-		pan.distance = 0;
-		pan.distanceRight = 0;
-		pan.distanceLeft = 0;
-		pan.enabled = false;
 	};
 
 	/**

@@ -146,7 +146,7 @@ var app = {
     },
 
     checkForUpdate: function(resolve, reject) {
-        app.utils.setLoadingMsg("Verification des mises à jour");
+        app.utils.setLoadingMsg("Vérification des mises à jour");
 
         var manifestReady = false;
         var assetsReady = false;
@@ -186,6 +186,7 @@ var app = {
             onGetMtime('manifest', mtime, assetsReady);
             manifestReady = true;
         });
+
         app.utils.getModifiedTime(app.manifest.meta.assetsUrl, function(mtime) {
             app.assetsMtime = mtime;
             onGetMtime('assets', mtime, manifestReady);
@@ -194,11 +195,16 @@ var app = {
     },
 
     loadLocalManifest: function() {
+        // In case the url is incorrect, we get the backup manifest
+        app.safeManifest = app.manifest;
+
         var manifest;
         if(manifest = localStorage.getItem("momo-manifest")){
             try {
                 app.manifest = JSON.parse(manifest);
-            } catch(e) {}
+            } catch(e) {
+                app.manifest = app.safeManifest;
+            }
         }
     },
 
@@ -206,10 +212,6 @@ var app = {
     loadManifest: function(resolve, reject){
         if(DEBUG) console.log('load '+JSON.stringify(app.manifest));
         app.utils.setLoadingMsg("Mise à jour du manifest - 0%");
-
-        // In case the url is incorrect, we get the backup manifest
-
-        app.safeManifest = app.manifest;
 
         // Get manifest from localStorage if it exists
         app.loadLocalManifest();
@@ -246,6 +248,7 @@ var app = {
                     } catch(e) {
                         if(DEBUG) console.log('Cannot parse application manifest '+url);
                         app.flash('Le manifest JSON comporte des erreurs', 'danger');
+                        app.manifest = app.safeManifest;
                         if(typeof reject === "function")
                             reject();
 
@@ -262,9 +265,9 @@ var app = {
 
         // Handle AJAX Error
         request.onerror = function() {
-            app.onAjaxError(url);
             if(typeof reject === "function")
                 reject();
+            app.onAjaxError(url);
         };
 
         // Send AJAX
@@ -280,9 +283,6 @@ var app = {
 
         // Restore safe manifest 
         app.manifest = app.safeManifest;
-
-        // And start application
-        app.start();
     },
 
     // Patch manifest response to set filesystem's relative paths (offline)
@@ -452,7 +452,6 @@ var app = {
         
         // Dev page refresh : redirect to home
         window.location.replace('#home');
-
         // Regiter pages tree
         app.registerPage(app.manifest, app.defaultPage);
     
@@ -483,9 +482,9 @@ var app = {
             var id = data.id = data.id ? data.id : (data.title ? app.utils.hyphenate(data.title.stripTags()) : '_' + Math.random().toString(36).substr(2, 9));
 
             // Make sure id is unique
-            var i = 1;
+            var i = 0;
             while(app.pages.hasOwnProperty(data.id)){
-                data.id = id+'_'+i.toString();
+                data.id = id+'_'+(i++).toString();
             }
 
             // Register page
@@ -1107,19 +1106,33 @@ var app = {
         },
 
         getModifiedTime: function(url, callback) {
-          var xhr = new XMLHttpRequest();
-          xhr.open('HEAD', url, true); // use HEAD - we only need the headers
-          xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-              var mtime = new Date(xhr.getResponseHeader('Last-Modified'));
-              if (mtime.toString() === 'Invalid Date') {
-                callback(); // dont want to return a bad date
-              } else {
-                callback(mtime);
-              }
+            var xhr = new XMLHttpRequest();
+            xhr.open('HEAD', url, true); // use HEAD - we only need the headers
+            // AJAX Callback
+            xhr.onload = function() {
+
+                // AJAX success
+                if (xhr.status >= 200 && xhr.status < 400 || xhr.status == 0 /* iOS OhMyBuddha!! */) {
+                    var mtime = new Date(xhr.getResponseHeader('Last-Modified'));
+                    if (mtime.toString() === 'Invalid Date') {
+                      //app.onAjaxError(url);
+                      callback(); // dont want to return a bad date
+                    } else {
+                      callback(mtime);
+                    }
+                // AJAX error
+                } else {
+                  //app.onAjaxError(url);
+                  callback(); // dont want to return a bad date
+                }
             }
-          }
-          xhr.send();
+
+            // Handle AJAX Error
+            //xhr.onerror = function() {
+            //  //app.onAjaxError(url);
+            //  callback();
+            //};
+            xhr.send();
         },
 
         formatDate: function(date){
