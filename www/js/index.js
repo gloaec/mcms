@@ -563,7 +563,7 @@ var app = {
     },
 
     // Render Page
-    renderPage: function(page){
+    renderPage: function(page, forceMenu){
         if(page instanceof Object){
             if(DEBUG) console.log('render page '+JSON.stringify(page));
 
@@ -578,7 +578,7 @@ var app = {
             }
 
             // Render navigation
-            if(page.menu != app.pages[app.current_page].menu || !app.nav){
+            if(page.menu != app.pages[app.current_page].menu || !app.nav || forceMenu){
                 if(app.nav)
                     app.nav.destroy();
                 app.nav = responsiveNav(".momo-nav-collapse", { // Selector
@@ -616,7 +616,7 @@ var app = {
     },
 
     // Navigate to page
-    navigate: function(page, back, cb){
+    navigate: function(page, back, cb, force){
         var page_obj = app.pages[page];
 
         if(page_obj.external && back){
@@ -643,7 +643,7 @@ var app = {
         var $inpage  = document.getElementById(page);
 
         // Render page (with small hack, so it doesn't mess up the display)
-        $inpage.innerHTML = app.renderPage(page_obj);
+        $inpage.innerHTML = app.renderPage(page_obj, force);
 
         // Pull to update binder
         app.bindPagePull($inpage);
@@ -947,7 +947,7 @@ var app = {
         if(typeof app.pages[app.current_page].search != 'undefined'){
             app.search(app.current_query);
         } else {
-            app.navigate(app.current_page);
+            app.navigate(app.current_page, false, null, true);
         }
     },
 
