@@ -27,6 +27,8 @@ var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
 var ON_PULL = 'checkForUpdate'; // || 'update'
 
+window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
+
 // Application
 var app = {
 
@@ -41,12 +43,18 @@ var app = {
             'contact': 'contact@cadoles.com',
             'manifestUrl': 'index.json',
             'assetsUrl': 'assets.zip',
-            'updateFreq': 0,
-            'content': tmpl('momo-first-launch-tmpl'),
+            'updateFreq': 60000,
+            'default': true,
             'titlePersitent': true,
-            'titleSeparator': "<br>"
+            'titleSeparator': "<br>",
+            'menu': [],
+            'stylesheets': [],
+            'javascripts': []
         },
-        menu: []
+        'menu': [],
+        'stylesheets': [],
+        'javascripts': [],
+        'content': tmpl('momo-first-launch-tmpl', {})
     },
 
     // Default page attributes
@@ -55,7 +63,9 @@ var app = {
         colsm: 3,
         colmd: 2,
         collg: 1,
-        menu: []
+        menu: [],
+        javascripts: [],
+        stylesheets: []
     },
 
     // Misc Data
@@ -63,13 +73,21 @@ var app = {
     isAnimating   : false,
     endCurrPage   : false,
     endNextPage   : false,
-    hashHistory   : [window.location.hash],
+    pageIndex     : 0,
+    pageHistory   : [/*window.location.hash.slice(1)*/],
     historyLength : window.history.length,
     rootPath      : '',
     hasStarted    : false,
     assetsMtime   : null,
     manifestMtime : null,
     updateTimeout : null,
+    ignoreHash    : false,
+    previousPage  : 'home',
+    currentPage   : 'home',
+    parentPage    : 'home',
+    javascripts   : [],
+    stylesheets   : [],
+    rootPath      : DEBUG_WWW_URL, //TODO Remove useless calls to fileSystem
 
     // Application Constructor
     initialize: function() {
@@ -101,6 +119,9 @@ var app = {
     // Device ready callback
     onDeviceReady: function() {
 
+        // Backup assets
+        app.backupAssets();
+
         // Init search engine index
         app.initIndex();
 
@@ -115,6 +136,18 @@ var app = {
 
         // Touch events faster response patch
         FastClick.attach(document.body);
+    },
+
+    backupAssets: function(){
+        var els;
+        els = document.getElementsByTagName("script");
+        for (var i = 0, l = els.length; i < l; i++) {
+            app.javascripts.push(els[i].src);
+        }
+        els = document.getElementsByTagName("link");
+        for (var i = 0, l = els.length; i < l; i++) {
+            app.stylesheets.push(els[i].href);
+        }
     },
 
     // Initialize search engine index
@@ -202,6 +235,8 @@ var app = {
         if(manifest = localStorage.getItem("momo-manifest")){
             try {
                 app.manifest = JSON.parse(manifest);
+                // Override meta
+                app.manifest.meta = app.utils.extend(app.safeManifest.meta, app.manifest.meta);
             } catch(e) {
                 app.manifest = app.safeManifest;
             }
@@ -228,13 +263,20 @@ var app = {
             // AJAX success
             if (request.status >= 200 && request.status < 400 || request.status == 0 /* iOS OhMyBuddha!! */) {
 
-                // Patch raw text response for filesystem relative paths
+                app.utils.setLoadingMsg("Mise à jour du manifest - 99%");
+
+                // Patch raw text response for fileSystem relative paths
                 app.patchResponse(request.responseText, function(manifestResponse){
+
+                    app.utils.setLoadingMsg("Mise à jour du manifest - 100%");
 
                     try {
                         // Override current manifest
                         app.manifest = JSON.parse(manifestResponse);
 
+                        // Override meta
+                        app.manifest.meta = app.utils.extend(app.safeManifest.meta, app.manifest.meta);
+                        
                         // Store manifest if parsable
                         localStorage.setItem("momo-manifest", manifestResponse);
 
@@ -285,30 +327,40 @@ var app = {
         app.manifest = app.safeManifest;
     },
 
-    // Patch manifest response to set filesystem's relative paths (offline)
+    // Patch manifest response to set fileSystem's relative paths (offline)
     patchResponse: function(response, cb){
 
+        var patch = function(jsonText, path) {
+            return jsonText.replace(/(['"\(])\/?(assets\/[^'"\)]*)(['"\)])/g, function(match, q1, p, q2){
+                return q1+path+p+q2;
+            });
+        };
+
         // Phone context requires 'FileTransfer' & 'Zip' plugins
-        if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
-            window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
+        if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined' && typeof window.requestFileSystem == 'function'){
+            if(DEBUG) console.log('FileSystem access');
 
-                // Get filesystem's relative cache folder
-                var rootPath = fileSystem.root.toURL();
-
-                // Patch path to local in manifest response
-                var manifestResponse = response.replace(/(['"\(])\/?(assets\/[^'"\)]*)(['"\)])/g, function(match, q1, path, q2){
-                    return q1+rootPath+path+q2;
-                });
+            var onFileSystemGet = function(fileSystem){
+                // Get fileSystem's relative cache folder
+                var rootPath = app.rootPath = fileSystem.root.toURL();
 
                 // Callback
-                cb(manifestResponse);
+                cb(patch(response, rootPath));
+            };
 
-            });
+            try {
+                window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, onFileSystemGet, function(err){
+                    if(DEBUG) console.log('FileSystem unreachable');
+                    app.flash("Impossible d'écrire sur le périphérique", 'danger');
+                    cb(patch(response, DEBUG_WWW_URL));
+                });
+            } catch(e) {
+                if(DEBUG) console.log('FileSystem error'+e.message);
+                cb(patch(response, DEBUG_WWW_URL));
+            }
         } else {
-            var manifestResponse = response.replace(/(['"\(])\/?(assets\/[^'"\)]*)(['"\)])/g, function(match, q1, path, q2){
-                return q1+DEBUG_WWW_URL+path+q2;
-            });
-            cb(manifestResponse);
+            if(DEBUG) console.log('FileSystem unavaible');
+            cb(patch(response, DEBUG_WWW_URL));
         }
     },
 
@@ -318,66 +370,75 @@ var app = {
         if(DEBUG) console.log('fetch assets');
         app.utils.setLoadingMsg("Téléchargement des assets - 0%");
 
-        if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
-            window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
+        var onFileSystemGet = function(fileSystem){
 
-                var rootPath = fileSystem.root.toURL();
-                var fileTransfer = new FileTransfer();
-                var uri = encodeURI(app.manifest.meta.assetsUrl);
-                var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
-                
+            var rootPath = app.rootPath = fileSystem.root.toURL();
+            var fileTransfer = new FileTransfer();
+            var uri = encodeURI(app.manifest.meta.assetsUrl);
+            var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
 
-                // Fetch Assets Zip Archive
-                fileTransfer.download(
-                    // Source
-                    uri, 
-                    // Destination
-                    filePath, 
-                    // Success callback 
-                    function(entry) {
-                        app.utils.setLoadingMsg("Extraction de la mise à jour");
-                        // Unzip Assets
-                        zip.unzip(filePath, rootPath,
-                            // Success callback
-                            function(ret){
-                                if(DEBUG) console.log('unzip success');
-                                app.utils.setLoadingMsg("Téléchargement des assets - 100%");
-                                if(ret == 0) {
-                                    if(typeof resolve === 'function')
-                                        resolve();
-                                } else 
-                                if(ret == -1) {
-                                    if(typeof reject === 'function')
-                                        reject();
-                                }
-                            },
-                            // Progress callback
-                            function(e){
-                                var progress = Math.round((e.loaded / e.total) * 100);
-                                app.utils.setLoadingMsg("Téléchargement des assets - "+progress+"%");
+            // Fetch Assets Zip Archive
+            fileTransfer.download(
+                // Source
+                uri, 
+                // Destination
+                filePath, 
+                // Success callback 
+                function(entry) {
+                    app.utils.setLoadingMsg("Extraction de la mise à jour");
+                    // Unzip Assets
+                    zip.unzip(filePath, rootPath,
+                        // Success callback
+                        function(ret){
+                            if(DEBUG) console.log('unzip success');
+                            app.utils.setLoadingMsg("Téléchargement des assets - 100%");
+                            if(ret == 0) {
+                                if(typeof resolve === 'function')
+                                    resolve();
+                            } else 
+                            if(ret == -1) {
+                                if(typeof reject === 'function')
+                                    reject();
                             }
-                        );
-                    },
-                    // Error callback
-                    function(error) {
-                        if(DEBUG) console.log("download error source " + error.source);
-                        if(DEBUG) console.log("download error target " + error.target);
-                        if(DEBUG) console.log("upload error code" + error.code);
-                        cb();
-                    },
-                    // Misc
-                    false,
-                    {
-                        headers: {}
-                    }
-                );
-            }, function(error){ 
-                if(DEBUG) console.error('Filesystem error');
-                app.utils.setLoadingMsg("Erreur du système de fichier");
-                app.flash("Erreur du système de fichier", 'danger');
+                        },
+                        // Progress callback
+                        function(e){
+                            var progress = Math.round((e.loaded / e.total) * 100);
+                            app.utils.setLoadingMsg("Téléchargement des assets - "+progress+"%");
+                        }
+                    );
+                },
+                // Error callback
+                function(error) {
+                    if(DEBUG) console.log("download error source " + error.source);
+                    if(DEBUG) console.log("download error target " + error.target);
+                    if(DEBUG) console.log("upload error code" + error.code);
+                    f(typeof reject === 'function')
+                       reject();
+                },
+                // Misc
+                false,
+                {
+                    headers: {}
+                }
+            );
+        };
+
+
+        if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined' && typeof window.requestFileSystem == 'function'){
+            try {
+                window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, onFileSystemGet, function(err){
+                    if(DEBUG) console.error('Filesystem error');
+                    app.utils.setLoadingMsg("Erreur du système de fichier");
+                    app.flash("Erreur du système de fichier", 'danger');
+                    if(typeof reject === 'function')
+                        reject();
+                });
+            } catch(e) {
+                if(DEBUG) console.log('FileSystem error : '+e.message);
                 if(typeof reject === 'function')
                     reject();
-            });
+            }
         } else {
             if(DEBUG) console.error('Plugins "zip" & "file-transfer" not available (local mode ?)');
             app.utils.setLoadingMsg("Plugin 'zip' indisponible");
@@ -387,7 +448,62 @@ var app = {
         }
     },
 
+    refreshAssets: function(page){
+
+        // Refresh scripts
+        for(var i = 0, l = page.javascripts.length; i < l; i++){
+            var file = page.javascripts[i];
+            var found = false;
+            var els = document.getElementsByTagName("script");
+            for (var j = 0, m = els.length; j < m; j++) {
+                var el = els[j];
+                if (el.src === file) {
+                    found = true;
+                } else if(page.javascripts.indexOf(el.src) < 0 && app.javascripts.indexOf(el.src) < 0){
+                    el.parentNode.removeChild(el);
+                    m = els.length; j--;
+                }
+            }
+            if(!found){
+                // Script tag
+                var script = document.createElement("script");
+                script.type = "text/javascript";
+                script.src = file;
+                document.getElementsByTagName("head")[0].appendChild(script);
+            }
+            
+        }
+
+        // Refresh stylesheets
+        for(var i = 0, l = page.stylesheets.length; i < l; i++){
+            var file = page.stylesheets[i];
+            var found = false;
+            var els = document.getElementsByTagName("link");
+            for (var j = 0, m = els.length; j < m; j++) {
+                var el = els[j];
+                if (el.href === file) {
+                    found = true;
+                } else if(page.stylesheets.indexOf(el.href) < 0 && app.stylesheets.indexOf(el.href) < 0){
+                    el.parentNode.removeChild(el);
+                    m = els.length; j--;
+                }
+            }
+            if(!found){
+                // Link Tag
+                var link = document.createElement("link");
+                link.type = "text/css";
+                link.rel = "stylesheet";
+                link.href = file;
+                document.getElementsByTagName("head")[0].appendChild(link);
+            }
+            
+        }
+    },
+
     appendAssets: function(resolve, reject){
+        if(typeof resolve === 'function')
+            resolve();
+        return;
         var append = function(rootPath){
 
             // Link Tag
@@ -432,8 +548,8 @@ var app = {
         if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined'){
             window.requestFileSystem(LocalFileSystem.TEMPORARY, 0, function (fileSystem) {
 
-                // Get filesystem's relative cache folder
-                var rootPath = fileSystem.root.toURL();
+                // Get fileSystem's relative cache folder
+                var rootPath = app.rootPath = fileSystem.root.toURL();
                 append(rootPath);
             });
         } else {
@@ -448,7 +564,7 @@ var app = {
         app.hasStarted = true;
 
         // Default route to home
-        app.manifest.id = app.current_page = 'home';
+        app.manifest.id = app.currentPage = 'home';
         
         // Dev page refresh : redirect to home
         window.location.replace('#home');
@@ -460,6 +576,9 @@ var app = {
 
         // Navigate to home
         app.navigate('home', false, function(){
+
+            // Reset history
+            app.pageIndex = 0;
 
             // Append assets
             app.appendAssets(resolve, reject);
@@ -475,8 +594,14 @@ var app = {
 
         if(data instanceof Object){
 
+            // Cache orginal page
+            data.original = JSON.parse(JSON.stringify(data).replace(new RegExp(app.rootPath, 'g'), ""));
+
             // Extends default page
             data = app.utils.extend(app.defaultPage, data);
+            
+            // Set page's parent
+            data.parent = parentPage;
 
             // Generate a page ID
             var id = data.id = data.id ? data.id : (data.title ? app.utils.hyphenate(data.title.stripTags()) : '_' + Math.random().toString(36).substr(2, 9));
@@ -497,8 +622,25 @@ var app = {
                     app.pages[data.id].menu[i] = app.registerPage(page, data);
                 }
             } else {
-                app.pages[data.id].menu = parentPage.menu;
+                app.pages[data.id].menu = parentPage.menu || [];
             }
+            app.pages[data.id].menu = app.manifest.meta.menu.concat(app.pages[data.id].menu).unique();
+
+            // Register javascript items
+            if(data.javascripts instanceof Array && data.javascripts.length > 0){
+                app.pages[data.id].javascripts = data.javascripts;
+            } else {
+                app.pages[data.id].javascripts = parentPage.javascripts || [];
+            }
+            app.pages[data.id].javascripts = app.manifest.meta.javascripts.concat(app.pages[data.id].javascripts).unique();
+
+            // Register stylesheets items
+            if(data.stylesheets instanceof Array && data.stylesheets.length > 0){
+                app.pages[data.id].stylesheets = data.stylesheets;
+            } else {
+                app.pages[data.id].stylesheets = parentPage.stylesheets || [];
+            }
+            app.pages[data.id].stylesheets = app.manifest.meta.stylesheets.concat(app.pages[data.id].stylesheets).unique();
 
             // Register hidden pages childrens
             if(data._pages instanceof Array){
@@ -510,9 +652,23 @@ var app = {
 
             // Register page childrens
             if(data.pages instanceof Array){
+                var images = [];
                 for(var i = 0; i < data.pages.length; i++){
                     var page = data.pages[i];
-                    app.pages[data.id].pages[i] = app.registerPage(page, data);
+                    page = app.pages[data.id].pages[i] = app.registerPage(page, data);
+                    if(app.pages[page] && app.pages[page].url && app.pages[page].url.isImage())
+                        images.push(page);
+                }
+                // Build Gallery
+                if(images.length){
+                    if(images[0] == images[images.length - 1])
+                        app.pages[data.id].pages.pop();
+                    for(var i = 0; i < images.length; i++){
+                        if(i > 0)
+                            app.pages[images[i]].prev = images[i-1];
+                        if(i < images.length-1)
+                            app.pages[images[i]].next = images[i+1];
+                    }
                 }
             }
 
@@ -532,9 +688,11 @@ var app = {
                 keywords: data.keywords
             });
             
+            // Return ID string
             return data.id;
         } else
         if(typeof data === 'string' || data instanceof String || data instanceof Number){
+            // Return ID string
             return data;
         }
     },
@@ -567,10 +725,14 @@ var app = {
         if(page instanceof Object){
             if(DEBUG) console.log('render page '+JSON.stringify(page));
 
+            // Refresh assets
+            app.refreshAssets(page);
+
             // Render every menu items
             document.getElementById('momo-menu').innerHTML = "";
 
-            for(var i in page.menu){
+
+            for(var i = 0, l = page.menu.length; i < l; i++){
                 var $menuItem = document.createElement('li');
                 var data = app.utils.extend(app.pages[page.menu[i]], { header: true });
                 $menuItem.innerHTML = tmpl("momo-list-item-tmpl", data);
@@ -578,7 +740,7 @@ var app = {
             }
 
             // Render navigation
-            if(page.menu != app.pages[app.current_page].menu || !app.nav || forceMenu){
+            if(page.menu != app.pages[app.currentPage].menu || !app.nav || forceMenu){
                 if(app.nav)
                     app.nav.destroy();
                 app.nav = responsiveNav(".momo-nav-collapse", { // Selector
@@ -597,6 +759,7 @@ var app = {
                     close: function(){} // Function: Close callback
                 });
             }
+            // Cleanup
             app.nav.unbindEvents();
             app.nav.bindEvents();
 
@@ -605,6 +768,18 @@ var app = {
 
             // Change page header
             document.getElementById("momo-header").innerHTML = tmpl("momo-header-tmpl", data);
+
+            // Render inner template
+            if(data.template){
+                var script = document.createElement("script");
+                script.type = "text/x-tmpl";
+                script.id = data.id+"-tmpl";
+                script.innerHTML = data.template;
+                document.getElementById('momo-templates').innerHTML = "";
+                document.getElementById('momo-templates').appendChild(script);
+                data.content = data.content || "";
+                data.content+= tmpl(data.id+"-tmpl", data);
+            }
 
             // Render Page
             return tmpl("momo-page-tmpl", data);
@@ -639,7 +814,7 @@ var app = {
         app.isAnimating = true;
         document.title = page_obj.title;
 
-        var $outpage = document.getElementById(app.current_page);
+        var $outpage = document.getElementById(app.currentPage);
         var $inpage  = document.getElementById(page);
 
         // Render page (with small hack, so it doesn't mess up the display)
@@ -648,7 +823,7 @@ var app = {
         // Pull to update binder
         app.bindPagePull($inpage);
 
-        if(!ANIMATION_ENABLED || app.current_page == page){
+        if(!ANIMATION_ENABLED || app.currentPage == page){
             $inpage.classList.add('momo-page-current');
             app.onAnimationEnd($outpage, $inpage, back, cb);
         } else {
@@ -694,7 +869,7 @@ var app = {
             $inpage.addEventListener('MSAnimationEnd',     inCb, false);
         }
 
-        app.current_page = page;
+        app.currentPage = page;
     },
 
     bindPagePull: function($page) {
@@ -735,13 +910,23 @@ var app = {
         //return targ.onclick();
     },
 
-    // Location Hash change event
+    // Location Hash change event (sorry & good luck)
     onHashChange: function(e) {
-        var hash = window.location.hash, length = window.history.length;
-        var page = window.location.hash.slice(1);
+        var hash = window.location.hash, 
+            length = window.history.length,
+            page = window.location.hash.slice(1);
+
+
+        console.warn(app.previousPage + " -> " + page);
+
+        // Hack of the century ?
+        if(app.ignoreHash) return false;
+        if(document.body.classList.contains( 'ptr-back' )) return false;
+        if(document.body.classList.contains( 'ptr-forward' )) return false;
 
         if(page == 'momo-update'){
-            window.location.replace(app.hashHistory[app.hashHistory.length-1]);
+            //window.location.replace('#'+app.pageHistory[app.pageHistory.length-1]);
+            window.replaceHash(app.pageHistory[app.pageHistory.length-1]);
             document.body.classList.add('ptr-loading');
             var cb = function() {
                 setTimeout(function(){
@@ -752,12 +937,69 @@ var app = {
                     }, 250);
                 }, 1000);
             };
-            return app.update(cb, cb);
-            return window.history.back();
+            app.update(cb, cb);
+            app.ignoreHash = true;
+            window.history.go(-1);
+            app.ignoreHash = false;
+            return app.previousPage = page;
         } else
         if(page == 'momo-blank'){
-            return window.location.replace(app.hashHistory[app.hashHistory.length-1]);
-            return window.history.back();
+            //return window.location.replace(app.pageHistory[app.pageHistory.length-1]);
+            //return window.history.back();
+            app.ignoreHash = true;
+            window.history.go(-1);
+            app.ignoreHash = false;
+            return app.previousPage = page;
+        } 
+        else
+        if(page == 'momo-back'){
+            var prev = app.pages[app.currentPage].prev
+            if(prev){
+                page = prev;
+                window.replaceHash(app.parentPage);
+                window.history.go(-1);
+                app.navigate(page, true);
+                //app.ignoreHash = true;
+                //window.location.hash = "#"+page;
+                //app.ignoreHash = false;
+            } else {
+                if(app.previousPage == 'momo-forward')
+                    window.history.go(-1);
+                else
+                    window.history.go(-2);
+            }
+            //window.replaceHash(page);
+            return app.previousPage = page;
+        }
+        else
+        if(page == 'momo-forward'){
+            var prev = app.pages[app.currentPage].prev
+            var next = app.pages[app.currentPage].next
+            if(next){
+                page = next;
+                window.replaceHash(app.parentPage);
+                window.history.go(-1);
+                app.navigate(page, false);
+                //window.replaceHash(page);
+                //app.ignoreHash = true;
+                //window.location.hash = "#"+page;
+                //app.ignoreHash = false;
+            } else if(prev) {
+                window.replaceHash(app.parentPage);
+                window.history.go(-1);
+            } else {
+                if(app.previousPage == 'momo-back'){
+                    window.history.go(-1);
+                } else {
+                    page = app.pageIndex+1 < app.pageHistory.length ? app.pageHistory[app.pageIndex+1] : app.pageHistory[app.pageHistory.length - 1];
+                    if(page != app.currentPage)
+                        window.location.hash = "#"+app.pageHistory[app.pageHistory.length-1];
+                    else
+                        window.history.go(-1);
+                }
+            }
+            //window.replaceHash(page);
+            return app.previousPage = 'momo-forward';
         }
 
         if(!app.pages.hasOwnProperty(page)){
@@ -766,21 +1008,37 @@ var app = {
 
         var back = page == 'home';
 
-        if (app.hashHistory.length && app.historyLength == length) {
-            if (app.hashHistory[app.hashHistory.length - 2] == hash) {
-                app.hashHistory = app.hashHistory.slice(0, -1);
+        console.log(app.pageHistory.join(',')+ " (index = "+app.pageIndex+")");
+
+        if (app.pageHistory.length/* && app.historyLength == length*/) {
+            // Goind Back
+            if (app.pageHistory[app.pageIndex - 1] == page) {
+                //app.pageHistory = app.pageHistory.slice(0, app.pageIndex);
                 back = true; 
+                app.pageIndex--;
+            } else
+            // Going Forward
+            if(app.pageIndex+1 < app.pageHistory.length && app.pageHistory[app.pageIndex + 1] == page) {
+                //app.pageHistory = app.pageHistory.slice(0, app.pageIndex);
+                app.pageIndex++;
             } else {
-                app.hashHistory.push(hash);
+            // Going to new page
+            app.pageHistory = app.pageHistory.slice(0, app.pageIndex+1);
+            if(page != app.pageHistory[app.pageHistory.length-1])
+                app.pageHistory.push(page);
+            app.pageIndex = app.pageHistory.length - 1;
+            app.historyLength = length;
             }
         } else {
-            app.hashHistory.push(hash);
-            app.historyLength = length;
+            app.pageHistory.push(page);
         }
 
-        if(app.current_page != page){
+        if(app.currentPage != page){
             app.navigate(page, back);
         }
+        app.parentPage = page;
+        app.previousPage = page;
+        return false;
     },
 
     onSearchSubmit: function(e){
@@ -813,7 +1071,7 @@ var app = {
         var results = app.index.search(app.utils.replaceAccents(query));
 
         // Register new search results page
-        app.pages[id] = {
+        app.pages[id] = app.utils.extend(app.defaultPage, {
             id: id,
             search: query,
             icon: "fa fa-search",
@@ -822,8 +1080,8 @@ var app = {
             pages: results.map(function(item){
                 return item.ref;
             }),
-            menu: app.pages[app.current_page].menu
-        };
+            menu: app.pages[app.currentPage].menu
+        });
 
         var $page = document.getElementById(id);
 
@@ -837,7 +1095,7 @@ var app = {
         }
 
         // Render page
-        $page.innerHTML = app.renderPage(app.pages[id], app.pages[app.current_page]);
+        $page.innerHTML = app.renderPage(app.pages[id], app.pages[app.currentPage]);
 
         // Navigate to search result page
         window.location.hash = "#"+id;
@@ -911,9 +1169,9 @@ var app = {
         for(var page in app.pages){
             if(typeof app.pages[page].search == 'undefined'){
                 delete app.pages[page];
-                document.getElementById("momo-pages").removeChild(
-                    document.getElementById(page)
-                );
+                var $page = document.getElementById(page);
+                if($page)
+                    $page.parentNode.removeChild($page);
             }
         }
         // Regiter pages tree
@@ -932,22 +1190,22 @@ var app = {
         }
 
         // Check for url change in manifest
-        app.checkForUpdate(function(updateAvailable){
-            if(updateAvailable)
-                app.update(resolve, reject);
-            else
+        //app.checkForUpdate(function(updateAvailable){
+        //    if(updateAvailable)
+        //        app.update(resolve, reject);
+        //    else
                 app.utils.setLoadingMsg("Mise à jour effectuée !");
             if(typeof resolve === 'function')
                 resolve();
-        }, function(){
-            if(typeof reject === 'function')
-                reject();
-        });
+        //}, function(){
+        //    if(typeof reject === 'function')
+        //        reject();
+        //});
 
-        if(typeof app.pages[app.current_page].search != 'undefined'){
+        if(typeof app.pages[app.currentPage].search != 'undefined'){
             app.search(app.current_query);
         } else {
-            app.navigate(app.current_page, false, null, true);
+            app.navigate(app.currentPage, false, null, true);
         }
     },
 
@@ -1146,9 +1404,87 @@ var app = {
             days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
             //return days[d.getDay()]+' '+months[d.getMonth()]+' '+d.getDate()+' '+d.getFullYear()+' '+hours+':'+minutes;//+ampm;
             return days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear()+' '+hours+':'+minutes;//+ampm;
+        },
+
+        clone: function (obj){
+            var copy;
+        
+            // Handle the 3 simple types, and null or undefined
+            if (null == obj || "object" != typeof obj) return obj;
+        
+            // Handle Date
+            if (obj instanceof Date) {
+                copy = new Date();
+                copy.setTime(obj.getTime());
+                return copy;
+            }
+        
+            // Handle Array
+            if (obj instanceof Array) {
+                copy = [];
+                for (var i = 0, len = obj.length; i < len; i++) {
+                    copy[i] = app.utils.clone(obj[i]);
+                }
+                return copy;
+            }
+        
+            // Handle Object
+            if (obj instanceof Object) {
+                copy = {};
+                for (var attr in obj) {
+                    if (obj.hasOwnProperty(attr)) copy[attr] = app.utils.clone(obj[attr]);
+                }
+                return copy;
+            }
+        
+            throw new Error("Unable to copy obj! Its type isn't supported.");
+        },
+
+        prettyJSON: function(json) {
+            if (typeof json != 'string') {
+                 json = JSON.stringify(json, undefined, 2);
+            }
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            json = json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+            return '<pre class="code">'+json+'</pre>';
         }
     }
 };
+
+(function(namespace) { // Closure to protect local variable "var hash"
+    if ('replaceState' in history) { // Yay, supported!
+        namespace.replaceHash = function(newhash) {
+            if ((''+newhash).charAt(0) !== '#') newhash = '#' + newhash;
+            history.replaceState('', '', newhash);
+        }
+    } else {
+        var hash = location.hash;
+        namespace.replaceHash = function(newhash) {
+            if (location.hash !== hash) history.back();
+            location.hash = newhash;
+        };
+    }
+})(window);
+
+if (typeof Object.prototype.toHTML != 'function') {
+    Object.prototype.toHTML = function (){
+        return app.utils.prettyJSON(this);
+    };
+}
 
 if (typeof String.prototype.startsWith != 'function') {
     String.prototype.startsWith = function (str){
@@ -1184,5 +1520,18 @@ if (typeof String.prototype.isUrl != 'function') {
 if (typeof String.prototype.isFramable != 'function') {
     String.prototype.isFramable = function (){
         return this.isImage() || this.isUrl();
+    };
+}
+
+if (typeof String.prototype.unique != 'function') {
+    Array.prototype.unique = function() {
+        var a = this.concat();
+        for(var i=0; i<a.length; ++i) {
+            for(var j=i+1; j<a.length; ++j) {
+                if(a[i] === a[j])
+                    a.splice(j--, 1);
+            }
+        }
+        return a;
     };
 }

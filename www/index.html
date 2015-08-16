@@ -39,6 +39,8 @@
     </head>
     <body>
 
+        <div id="momo-templates"></div>
+
         <div id="momo-main">
             <div class="momo-loading text-muted">
                 <i class="fa fa-spinner fa-pulse fa-3x"></i>
@@ -49,10 +51,13 @@
         </div>
 
         <script type="text/x-tmpl" id="momo-first-launch-tmpl">
-            <h1>Première utilisation</h1
-            <p>
-                Tirez vers le bas pour mettre à jour l'application
-            </p>
+            <div class="text-center text-muted">
+                <h1 class="page-header">Première utilisation</h1>
+                <img src="icon.png" width="128" height="128" class="bottom-20"/>
+                <div class="well">
+                    Tirez vers le bas pour mettre à jour l'application
+                </div>
+            </div>
         </script>
 
         <script type="text/x-tmpl" id="momo-icon-tmpl">
@@ -248,6 +253,12 @@
                         <div class="container-fluid momo-page-content-parent">
                             <section class="momo-page-content">{%# o.content %}</section>
                         </div>
+                        {% if(o.next){ %}
+                            <a class="momo-next" href="#momo-forward"><i class="fa fa-fw fa-lg fa-chevron-right"></i></a>
+                        {% } %}
+                        {% if(o.prev){ %}
+                            <a class="momo-previous" href="#momo-back"><i class="fa fa-fw fa-lg fa-chevron-left"></i></a>
+                        {% } %}
                     </div>
                     {% displayFooter = false; %}
                 {% } %}

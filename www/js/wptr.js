@@ -311,6 +311,7 @@ var WebPullToRefresh = (function () {
 	 * @param {object} e - Event object
 	 */
 	var _panEnd = function(e) {
+
 		e.preventDefault();
 
 		//options.contentEl.style.transform = options.contentEl.style.webkitTransform = '';
@@ -327,9 +328,17 @@ var WebPullToRefresh = (function () {
 		if ( document.body.classList.contains( 'ptr-refresh' ) ) {
 			_doLoading();
         } else if ( document.body.classList.contains( 'ptr-back' ) ) {
+            e.preventDefault();
+            e.srcEvent.stopPropagation();
+            e.srcEvent.stopImmediatePropagation();
             _doBack();
+            return false;
         } else if ( document.body.classList.contains( 'ptr-forward' ) ) {
+            e.preventDefault();
+            e.srcEvent.stopPropagation();
+            e.srcEvent.stopImmediatePropagation();
             _doForward();
+            return false;
 		} else {
 			_doReset();
 		}
@@ -357,13 +366,13 @@ var WebPullToRefresh = (function () {
 	};
 
     var _doBack = function() {
-        window.history.back();
         _doReset();
+        window.location.hash = "#momo-back";
     };
 
     var _doForward = function() {
-        window.history.forward();
         _doReset();
+        window.location.hash = "#momo-forward";
     };
 
 	/**
