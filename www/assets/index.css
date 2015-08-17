@@ -9,6 +9,9 @@
     background: #2A80AF;
     color: #FFF;
 }
+.text-cadoles {
+    color: #2A80AF;
+}
 .btn-cadoles:hover {
     background: #1A709F;
 }

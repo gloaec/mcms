@@ -27,8 +27,6 @@ var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
 var ON_PULL = 'checkForUpdate'; // || 'update'
 
-window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
-
 // Application
 var app = {
 
@@ -119,6 +117,9 @@ var app = {
     // Device ready callback
     onDeviceReady: function() {
 
+        // Init fileSystem
+        app.initFileSystem();
+
         // Backup assets
         app.backupAssets();
 
@@ -138,6 +139,36 @@ var app = {
         FastClick.attach(document.body);
     },
 
+    initFileSystem: function(){
+        // Chrome patch
+        window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
+
+        // Register rootPath
+        if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined' && typeof window.requestFileSystem == 'function'){
+            if(DEBUG) console.log('FileSystem access');
+
+            try {
+                window.requestFileSystem(LocalFileSystem.TEMPORARY, 0,
+                    function(fileSystem){
+                        app.rootPath = fileSystem.root.toURL();
+                    }, 
+                    function(err){
+                        if(DEBUG) console.log('FileSystem unreachable');
+                        app.flash("Impossible d'écrire sur le périphérique", 'danger');
+                        app.rootPath = DEBUG_WWW_URL;
+                    }
+                );
+            } catch(e) {
+                if(DEBUG) console.log('FileSystem error'+e.message);
+                app.rootPath = DEBUG_WWW_URL;
+            }
+        } else {
+            if(DEBUG) console.log('FileSystem unavaible');
+            app.rootPath = DEBUG_WWW_URL;
+        }
+    },
+
+    // Backup permanent assets
     backupAssets: function(){
         var els;
         els = document.getElementsByTagName("script");
@@ -165,6 +196,7 @@ var app = {
         });
     },
 
+    // Check for last update check
     checkForLastUpdateCheck: function(resolve, reject){
         // Checklast Update
         var lastUpdate   = localStorage.getItem("momo-timestamp") ? new Date(localStorage.getItem("momo-timestamp")) : new Date(0);
@@ -619,7 +651,10 @@ var app = {
             if(data.menu instanceof Array && data.menu.length > 0){
                 for(var i = 0; i < data.menu.length; i++){
                     var page = data.menu[i];
-                    app.pages[data.id].menu[i] = app.registerPage(page, data);
+                    if(page instanceof Object){
+                        app.pages[data.id].menu[i] = page.id;
+                    }
+                    app.pages[data.id].menu[i] = app.registerPage(page, app.pages[data.id]);
                 }
             } else {
                 app.pages[data.id].menu = parentPage.menu || [];
@@ -646,7 +681,10 @@ var app = {
             if(data._pages instanceof Array){
                 for(var i = 0; i < data._pages.length; i++){
                     var page = data._pages[i];
-                    app.pages[data.id]._pages[i] = app.registerPage(page, data);
+                    if(page instanceof Object){
+                        app.pages[data.id]._pages[i] = page.id;
+                    }
+                    app.pages[data.id]._pages[i] = app.registerPage(page, app.pages[data.id]);
                 }
             }
 
@@ -655,13 +693,16 @@ var app = {
                 var images = [];
                 for(var i = 0; i < data.pages.length; i++){
                     var page = data.pages[i];
-                    page = app.pages[data.id].pages[i] = app.registerPage(page, data);
-                    if(app.pages[page] && app.pages[page].url && app.pages[page].url.isImage())
+                    if(page instanceof Object){
+                        app.pages[data.id].pages[i] = page.id;
+                    }
+                    page = app.pages[data.id].pages[i] = app.registerPage(page, app.pages[data.id]);
+                    if(app.pages[page] && app.pages[page].url && app.pages[page].url.isImage() && !app.pages[page].external)
                         images.push(page);
                 }
                 // Build Gallery
                 if(images.length){
-                    if(images[0] == images[images.length - 1])
+                    if(images.length > 1 && images[0] == images[images.length - 1])
                         app.pages[data.id].pages.pop();
                     for(var i = 0; i < images.length; i++){
                         if(i > 0)
@@ -676,7 +717,10 @@ var app = {
             if(data.seealso instanceof Array){
                 for(var i = 0; i < data.seealso.length; i++){
                     var page = data.seealso[i];
-                    app.pages[data.id].seealso[i] = app.registerPage(page, data);
+                    if(page instanceof Object){
+                        app.pages[data.id].seealso[i] = page.id;
+                    }
+                    app.pages[data.id].seealso[i] = app.registerPage(page, app.pages[data.id]);
                 }
             }
 
@@ -777,8 +821,7 @@ var app = {
                 script.innerHTML = data.template;
                 document.getElementById('momo-templates').innerHTML = "";
                 document.getElementById('momo-templates').appendChild(script);
-                data.content = data.content || "";
-                data.content+= tmpl(data.id+"-tmpl", data);
+                data.content = tmpl(data.id+"-tmpl", data) + (data.content || "");
             }
 
             // Render Page
@@ -1234,14 +1277,14 @@ var app = {
         },
 
         openExternalURL: function(url, inAppBrowser){
-            if(inAppBrowser){
-                cordova.InAppBrowser.open(url);
-            } else {
+            //if(inAppBrowser){
+            //    cordova.InAppBrowser.open(url);
+            //} else {
                 if(navigator.app) // Android
                     navigator.app.loadUrl(encodeURI(url), { openExternal:true });
                 else // iOS and others
                     window.open(encodeURI(url), "_system", 'location=yes'); // opens in the app, not in safari
-            }
+            //}
             return false;
         },
 
