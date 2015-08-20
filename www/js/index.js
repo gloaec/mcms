@@ -224,7 +224,7 @@ var app = {
         var onGetMtime = function(key, mtime, ready){
             var old_mtime = localStorage.getItem("momo-"+key+"-mtime");
             if (mtime) {
-                if(mtime !== old_mtime) {
+                if(mtime.toString() !== old_mtime) {
                     updateAvailable = true;
                 }
             } else {
