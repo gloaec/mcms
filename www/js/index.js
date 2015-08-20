@@ -1497,7 +1497,7 @@ var app = {
             //ampm = d.getHours() >= 12 ? 'pm' : 'am',
             //months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
             //days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-            months = ['Janvier','Février','Mars','Avril','Mai','Juin','Jullet','Août','Septempbre','Octobre','Novembre','Décembre'],
+            months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'],
             days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
             //return days[d.getDay()]+' '+months[d.getMonth()]+' '+d.getDate()+' '+d.getFullYear()+' '+hours+':'+minutes;//+ampm;
             return days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear()+' '+hours+':'+minutes;//+ampm;
