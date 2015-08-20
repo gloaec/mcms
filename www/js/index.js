@@ -205,7 +205,7 @@ var app = {
         var updateRequired   = timeDiff > app.manifest.meta.updateFreq;
 
         if(updateRequired){
-            app.flash("Vérifiez si un nouvelle mise à jour est disponible en tirant la page vers les bas", "info");
+            app.flash("Vérifiez si une mise à jour est disponible en tirant la page vers le bas", "info");
         }
 
         if(typeof resolve === 'function'){
