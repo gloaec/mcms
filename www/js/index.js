@@ -242,7 +242,7 @@ var app = {
                         app.flash(tmpl('momo-update-available-tmpl', { mtime: app.utils.formatDate(mtime) }), 'success');
                         app.utils.setLoadingMsg("Mise à jour disponible !");
                     } else {
-                        app.utils.setLoadingMsg("Aucunes nouvelles mises à jour");
+                        app.utils.setLoadingMsg("Aucune nouvelles mises à jour");
                     }
                     if(typeof resolve === 'function'){
                         resolve(updateAvailable);
