@@ -238,6 +238,9 @@ var app = {
                         reject();
                     }
                 } else {
+                    /* record that a check for update was succesfully done */
+                    localStorage.setItem("momo-timestamp",  (new Date()).toString());
+
                     if(updateAvailable){
                         app.flash(tmpl('momo-update-available-tmpl', { mtime: app.utils.formatDate(mtime) }), 'success');
                         app.utils.setLoadingMsg("Mise à jour disponible !");
