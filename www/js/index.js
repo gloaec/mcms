@@ -116,7 +116,33 @@ var app = {
 
     // Device ready callback
     onDeviceReady: function() {
+        var request = new XMLHttpRequest();
+        request.open('GET', '../index.json');
+        request.onload = function() {
+            if (request.status != 200) {
+                /* this should never happen */
+                app.utils.setLoadingMsg("Initialisation de l'application : erreur de chargement");
+            } else {
+                var new_manifest = JSON.parse(this.responseText);
+                for (var attr in new_manifest.meta) {
+                    if (new_manifest.meta.hasOwnProperty(attr)) {
+                        app.manifest.meta[attr] = new_manifest.meta[attr];
+                    }
+                }
+                app.manifest.title = new_manifest.title;
+                app.manifest.content = new_manifest.content;
+                app.manifest.pages = new_manifest.pages;
+                app.onDefaultManifestLoaded();
+            }
+        };
+        request.send();
+    },
 
+    onDefaultManifestLoaded: function() {
+        app.initApplication();
+    },
+
+    initApplication: function() {
         // Init fileSystem
         app.initFileSystem();
 
