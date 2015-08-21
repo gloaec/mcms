@@ -1161,7 +1161,7 @@ var app = {
             search: query,
             icon: "fa fa-search",
             title: 'Recherche "'+query+'"',
-            content: results.length ? null : '<div class="well text-center text-muted">Aucun resultat</div>',
+            content: results.length ? null : '<div class="well text-center text-muted">Aucun résultat</div>',
             pages: results.map(function(item){
                 return item.ref;
             }),
