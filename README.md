@@ -64,24 +64,27 @@ file transfer and chromium zip. The *meta* section in the manifest
 
     }, ...}
 
-And here is what is supposed to be the content of `assets.zip`:
+The assets.zip file will be downloaded and uncompressed right into the
+application root folder; beware this could overwrite files, it is advised
+to use subdirectories (typically the zip file should contain its files in
+a assets/ directory).
 
-- `index.js`: Some extra script to be loaded dynamically in the application
-- `index.css`: A css stylesheet that will be injected as well
-- `*.[png,woff,...]`: images, fonts & other static files
+The zip file structure could look like this:
 
-In the `www/index.json` pages content, you must specify url to you assets using
-relative path prefixed with `assets/`, like so:
+- `assets/index.js`: Some extra script to be loaded dynamically in the application
+- `assets/index.css`: A css stylesheet that will be injected as well
+- `assets/*.[png,woff,...]`: images, fonts & other static files
+
+
+In the manifest pages content, you must specify URLs to you assets using paths
+relative to the root of the assets.zip. If it contains an image in
+assets/dijon.jpg, it should be referenced like this:
 
     {
         "title": "Ma ville",
         "content": "<p>Bienvenue !</p><img src='assets/dijon.jpg' class='momo-image' />"
     }
 
-In stylesheets however, you should only be able to give relative references , as
-such:
-
-    background: img(../img/bg.png) top left repeat;
 
 Don't forget to enable CORS on the server that will distribute the assets.
 
