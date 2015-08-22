@@ -54,7 +54,8 @@ var app = {
         'menu': [],
         'stylesheets': [],
         'javascripts': [],
-        'content': tmpl('momo-first-launch-tmpl', {})
+        'content': tmpl('momo-first-launch-tmpl', {}),
+        'footer': undefined
     },
 
     // Default page attributes
@@ -132,6 +133,7 @@ var app = {
                 app.manifest.title = new_manifest.title;
                 app.manifest.content = new_manifest.content;
                 app.manifest.pages = new_manifest.pages;
+                app.manifest.footer = new_manifest.footer;
                 app.onDefaultManifestLoaded();
             }
         };
@@ -639,6 +641,11 @@ var app = {
         if(DEBUG){ console.log('start '+JSON.stringify(app.manifest)); }
         app.utils.setLoadingMsg("Démarrage de l'application");
         app.hasStarted = true;
+
+        /* if there's no footer, fallback to the default */
+        if (typeof app.manifest.footer === 'undefined') {
+            app.manifest.footer = tmpl('momo-default-footer-tmpl', app.manifest);
+        }
 
         // Default route to home
         app.manifest.id = app.currentPage = 'home';

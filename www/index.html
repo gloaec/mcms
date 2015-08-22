@@ -60,6 +60,19 @@
             </div>
         </script>
 
+        <script type="text/x-tmpl" id="momo-default-footer-tmpl">
+          <div class="col-xs-6 navbar-btn text-left">
+              <a href="https://dev.entrouvert.org/projects/momo/"
+                  class="btn btn-success pull-left momo-repo"
+                  target="_system"
+                  onclick="javascript:app.utils.onExternalLinkClick()">Momo repository</a>
+          </div>
+          <div class="col-xs-6 navbar-btn text-right">
+              <a href="mailto:{%= o.meta.contact %}"
+                  class="btn btn-success pull-right momo-contact">{%= o.meta.contact %}</a>
+          </div>
+        </script>
+
         <script type="text/x-tmpl" id="momo-icon-tmpl">
             {% if(o.icon){ %}
                 {% if(o.icon.isFramable()){ %}
@@ -307,16 +320,7 @@
                 <footer class="navbar navbar-inverse momo-footer">
                     <div class="container-fluid clearfix">
                         <div class="row">
-                            <div class="col-xs-6 navbar-btn text-left">
-                                <a href="https://dev.entrouvert.org/projects/momo/"
-                                    class="btn btn-success pull-left momo-repo" 
-                                    target="_system"
-                                    onclick="javascript:app.utils.onExternalLinkClick()">Momo repository</a>
-                            </div>
-                            <div class="col-xs-6 navbar-btn text-right">
-                                <a href="mailto:{%= o.meta.contact %}" 
-                                    class="btn btn-success pull-right momo-contact">{%= o.meta.contact %}</a>
-                            </div>
+                            {%# o.footer %}
                         </div>
                     </div>
                 </footer>
