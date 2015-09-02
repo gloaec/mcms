@@ -93,32 +93,32 @@
                 {% } %}
             </div>
             <div class="parent-navbar-brand">
-            <span class="navbar-brand" href="#home">
-                {% if(!(o.titlePersistent || o.meta.titlePersistent)){ %}
-                    {%# (o.titleSeparator || o.meta.titleSeparator) %}
-                {% } %}
-                <span class="momo-icon">
-                    {% var icon = (o.titlePersistent || o.meta.titlePersistent) ? o.meta.icon : o.icon || o.meta.icon; %}
-                    {% if(icon){ %}
-                        {%# tmpl('momo-icon-tmpl', { icon: icon, size: 20, header: true }) %}
-                    {% } %}
-                </span>
-                <span class="momo-title">
-                    {% if(o.titlePersistent || o.meta.titlePersistent){ %}
-                        {%= o.meta.title %}
+                <span class="navbar-brand" href="#home">
+                    {% if(!(o.titlePersistent || o.meta.titlePersistent || o.id == 'home')){ %}
                         {%# (o.titleSeparator || o.meta.titleSeparator) %}
-                        <small>
-                            {% if(o.meta.icon && o.icon){ %}
-                              {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20, header: true }) %}
-                            {% } %}
-                            {%# o.title %}
-                        </small>
-                    {% } else { %}
-                        {%# (o.title || o.meta.title) %}
                     {% } %}
+                    <span class="momo-icon">
+                        {% var icon = (o.titlePersistent || o.meta.titlePersistent || o.id == 'home') ? o.meta.icon : o.icon || o.meta.icon; %}
+                        {% if(icon){ %}
+                            {%# tmpl('momo-icon-tmpl', { icon: icon, size: 20, header: true }) %}
+                        {% } %}
+                    </span>
+                    <span class="momo-title">
+                        {% if(o.titlePersistent || o.meta.titlePersistent || o.id == 'home'){ %}
+                            {%= o.meta.title %}
+                            {%# (o.titleSeparator || o.meta.titleSeparator) %}
+                            <small>
+                                {% if(o.meta.icon && o.icon){ %}
+                                  {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20, header: true }) %}
+                                {% } %}
+                                {%# o.title %}
+                            </small>
+                        {% } else { %}
+                            {%# (o.title || o.meta.title) %}
+                        {% } %}
+                    </span>
                 </span>
-            </span>
-        </div>
+            </div>
         </script>
 
         <!-- Main Template -->
