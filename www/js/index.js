@@ -158,13 +158,16 @@ var app = {
         app.loadLocalManifest();
 
         // Check for new updates
-        app.checkForUpdate(app.start, app.start);
+        //app.checkForUpdate(app.start, app.start);
 
         // Update Reminder
         app.updateTimeout = setTimeout( app.checkForLastUpdateCheck, app.manifest.meta.updateFreq );
 
         // Touch events faster response patch
         FastClick.attach(document.body);
+
+        // Start Application
+        app.start();
     },
 
     initFileSystem: function(){
@@ -1028,7 +1031,7 @@ var app = {
             prev, next;
 
 
-        console.warn(app.previousPage + " -> " + page);
+        //console.warn(app.previousPage + " -> " + page);
 
         // Hack of the century ?
         if(app.ignoreHash){ return false; }
@@ -1125,7 +1128,7 @@ var app = {
 
         var back = page === 'home';
 
-        console.log(app.pageHistory.join(',')+ " (index = "+app.pageIndex+")");
+        //console.log(app.pageHistory.join(',')+ " (index = "+app.pageIndex+")");
 
         if (app.pageHistory.length/* && app.historyLength == length*/) {
             // Goind Back
