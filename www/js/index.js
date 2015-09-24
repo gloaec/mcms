@@ -229,7 +229,7 @@ var app = {
     checkForLastUpdateCheck: function(resolve, reject){
         // Checklast Update
         var lastUpdate   = localStorage.getItem("momo-timestamp") ? new Date(localStorage.getItem("momo-timestamp")) : new Date(0);
-        var timeDiff     = ((new Date()).getTime() - lastUpdate.getTime()) / 1000;
+        var timeDiff     = ((new Date()).getTime() - lastUpdate.getTime());
         var updateRequired   = timeDiff > app.manifest.meta.updateFreq;
 
         if(updateRequired){
