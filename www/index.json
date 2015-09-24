@@ -2,7 +2,7 @@
    "title": "Ma ville au quotidien (Local)",
    "icon": "icon.png",
    "contact": "info@example.net",
-   "updateFreq": 5,
+   "updateFreq": 5000,
    "manifestUrl": "http://pwr.link/entrouvert/index.json",
    "assetsUrl": "http://pwr.link/entrouvert/assets.zip"
  },
