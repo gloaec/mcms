@@ -7,9 +7,10 @@ class Momo
   contructor: (args...) ->
     @bindEvents()
 
+
   bindEvents: ->
     # Navigation Handler
-    window.addEventListener "hashchange", @onHashChange, false
+    xindow.addEventListener "hashchange", @onHashChange, false
     document.addEventListener "deviceready", @onDeviceReady, false
 
   init: ->

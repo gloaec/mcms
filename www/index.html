@@ -71,15 +71,15 @@
         </script>
 
         <script type="text/x-tmpl" id="momo-header-tmpl">
-            <div class="navbar-btn pull-left">
-                {% if(o.id && o.id != 'home'){ %}
-                    <a href="#" class="btn btn-default pull-left momo-back-btn" onclick="window.history.back(); return false;">
-                        <span class="sr-only"> History back </span>
-                        <i class="fa fa-chevron-left"></i>
-                    </a>
-                {% } %}
-            </div>
             <div class="parent-navbar-brand">
+                <div class="navbar-btn">
+                    {% if(o.id && o.id != 'home'){ %}
+                        <a href="#" class="btn btn-default pull-left momo-back-btn" onclick="window.history.back(); return false;">
+                            <span class="sr-only"> History back </span>
+                            <i class="fa fa-chevron-left"></i>
+                        </a>
+                    {% } %}
+                </div>
                 <span class="navbar-brand" href="#home">
                     {% if(!(o.titlePersistent || o.meta.titlePersistent || o.id == 'home')){ %}
                         {%# (o.titleSeparator || o.meta.titleSeparator) %}
@@ -150,7 +150,7 @@
                       </div>
                     </div>
                   </form>
-                  <ul id="momo-menu" class="nav navbar-nav navbar-left"></ul>
+                  <ul id="momo-menu" class="nav navbar-nav navbar-right"></ul>
                 </div>
               </div>
             </nav>
@@ -161,7 +161,7 @@
         </script>
 
         <script type="text/x-tmpl" id="momo-list-item-tmpl">
-            <a href="#{%= o.id %}" class="{% if(!o.header){ %} list-group-item {% } %} clearfix">
+            <a href="#{%= o.id %}" class="{% if(!o.header){ %} list-group-item {% } %} clearfix {%= o.external ? 'offline-disable' : '' %}">
                 {% if(o.header){ %}
                     <span class="pull-left">
                         {% if(o.icon){ %}
@@ -179,16 +179,28 @@
                         <i class="fa fa-angle-right pull-right visible-xs-inline"></i>
                     {% } %}
                 {% } else { %}
-                    <span class="pull-left">
-                        {% if(o.icon){ %}
-                            {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
+                        {% if(o.external) { %}
+                            <i class="fa fa-external-link pull-right"></i>
+                        {% } else { %}
+                            <i class="fa fa-angle-right pull-right"></i>
                         {% } %}
-                        {%# o.title %}
-                    </span>
-                    {% if(o.external) { %}
-                        <i class="fa fa-external-link pull-right"></i>
+                    {% if(o.description){ %}
+                        <h5 class="list-group-item-heading">
+                            {% if(o.icon){ %}
+                                {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
+                            {% } %}
+                            {%# o.title %}
+                        </h5>
+                        <p class="list-group-item-text">
+                            {%# o.description %}
+                        </p>
                     {% } else { %}
-                        <i class="fa fa-angle-right pull-right"></i>
+                        <h5 class="pull-left bottom-0 top-0">
+                            {% if(o.icon){ %}
+                                {%# tmpl('momo-icon-tmpl', { icon: o.icon, size: 20 }) %}
+                            {% } %}
+                            {%# o.title %}
+                        </h5>
                     {% } %}
                 {% } %}
             </a>
@@ -196,7 +208,7 @@
 
         <script type="text/x-tmpl" id="momo-icon-item-tmpl">
             <div class="col-xs-{%= o.colxs %} col-sm-{%= o.colsm %} col-md-{%= o.colmd %} col-lg-{%= o.collg %}">
-                <a href="#{%= o.id %}" class="btn btn-block text-center {%= o.className || 'btn-default' %}">
+                <a href="#{%= o.id %}" class="btn btn-block text-center {%= o.className || 'btn-default' %} {%= o.external ? 'offline-disable' : '' %}">
                     {% if(o.external){ %}
                         <i class="fa fa-external-link top-right"></i>
                     {% } %}
@@ -236,13 +248,22 @@
             <div class="clearfix"></div>
         </script>
 
+        <!-- Offline template -->
+        <script type="text/x-tmpl" id="momo-offline-tmpl">
+            <div class="alert alert-warning">
+                <i class="fa fa-warning"></i>
+                Application hors-ligne
+            </div>
+        </script>
+
         <!-- Page template -->
         <script type="text/x-tmpl" id="momo-page-tmpl">
             {% var displayFooter = true; %}
 
             <div class="{% if(o.url){ %}{% } else { %}momo-page-wrapper{% } %} clearfix">
+
                 {% if(o.url && !o.url.isImage()){ %}
-                    <div class="momo-frame-spinner">
+                    <div class="momo-frame-spinner offline-hidden">
                       <div class="momo-loading text-muted">
                           <i class="fa fa-spinner fa-pulse fa-3x"></i>
                           <p class="momo-loading-text">
@@ -253,12 +274,18 @@
                 {% } %}
 
                 {% if(!(o.url && o.url.isImage())){ %}
+                    <div class="offline-visible">
+                        {%# tmpl('momo-offline-tmpl', o) %}
+                    </div>
                     <div class="momo-flash-messages"></div>
                     <div class="container-fluid">
                         <section class="momo-page-content">{%# o.content %}</section>
                     </div>
                 {% } else { %}
                     <div class="momo-image-viewer" style="background-image: url('{%# o.url %}');">
+                        <div class="offline-visible hidden">
+                            {%# tmpl('momo-offline-tmpl', o) %}
+                        </div>
                         <div class="momo-flash-messages"></div>
                         <div class="container-fluid momo-page-content-parent">
                             <section class="momo-page-content">{%# o.content %}</section>
@@ -275,7 +302,6 @@
                        
                 {% if(o.url && !o.url.isImage()){ %}
                     <iframe src="{%= o.url %}" class="momo-iframe"></iframe>
-                    <!--div class="momo-frame-overlay"></div-->
                 {% } %}
        
                 {% if(o.pages){ %}

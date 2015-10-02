@@ -280,7 +280,7 @@ img {
     display: table;
 }
 .navbar-header {
-    min-width: 200px;
+    /*min-width: 300px;*/
 }
 .parent-navbar-brand {
     display: table;
@@ -338,6 +338,9 @@ h1 {
     overflow:visible;
     padding:0px;
 }
+h5 {
+    font-size: 16px;
+}
 
 @keyframes fade {
     from { opacity: 1.0; }
@@ -377,15 +380,26 @@ pre .boolean { color: #7587A6; }
 pre .null { color: #828282; }
 pre .key { color: #CDA869; }
   
+.top-0 {
+    margin-top: 0px;
+}
 .top-10 {
     margin-top: 10px;
 }
 .top-20 {
     margin-top: 20px;
 }
+.bottom-0 {
+    margin-bottom: 0px;
+}
 .bottom-10 {
     margin-bottom: 10px;
 }
 .bottom-20 {
     margin-bottom: 20px;
+}
+@media (min-width: 768px) {
+    .navbar .navbar-btn {
+        padding-left: 0;
+    }
 }

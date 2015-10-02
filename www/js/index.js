@@ -28,6 +28,7 @@ var ANIMATION_IN_CLASS = 'pt-page-moveFromRight';
 var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
 var ON_PULL = 'checkForUpdate'; // || 'update'
+var CHECK_FOR_CONNECTION_INTERVAL = 3000;
 
 // Application
 var app = {
@@ -69,6 +70,7 @@ var app = {
     },
 
     // Misc Data
+    online        : false,
     current       : 0,
     isAnimating   : false,
     endCurrPage   : false,
@@ -131,6 +133,9 @@ var app = {
 
         // Check for new updates
         //app.checkForUpdate(app.start, app.start);
+
+        // Regulary check for connection
+        setInterval( app.checkConnection, CHECK_FOR_CONNECTION_INTERVAL );
 
         // Update Reminder
         app.updateTimeout = setTimeout( app.checkForLastUpdateCheck, app.manifest.meta.updateFreq );
@@ -200,6 +205,73 @@ var app = {
         });
     },
 
+    checkConnection: function(resolve, reject){
+        try {
+            switch(navigator.network.connection.type){
+                case Connection.ETHERNET:
+                case Connection.WIFI:
+                case Connection.CELL_4G:
+                case Connection.CELL_3G:
+                case Connection.CELL_2G:
+                    app.online = true;
+                    if(typeof resolve === "function"){
+                        resolve();  
+                    }
+                    break;
+                case Connection.NONE:
+                case Connection.UNKNOWN:
+                default:
+                    app.online = false;
+                    if(typeof reject === "function"){
+                        reject();  
+                    }
+                    break;
+            }
+        } catch(e) {
+            if(navigator.onLine){
+                app.online = true;
+                if(typeof resolve === "function"){
+                    resolve();  
+                }
+            } else {
+                app.online = false;
+                if(typeof reject === "function"){
+                    reject();  
+                }
+            }
+        }
+        // Hide offline specific elements
+        var i, elements;
+        elements = document.getElementsByClassName("offline-hidden");
+        for (i = 0; i < elements.length; i++){
+            if(app.online){
+                elements[i].classList.remove('hidden');
+            } else {
+                elements[i].classList.add('hidden');
+            }
+        }
+        // Show offline specific elements
+        var i, elements;
+        elements = document.getElementsByClassName("offline-visible");
+        for (i = 0; i < elements.length; i++){
+            if(app.online){
+                elements[i].classList.add('hidden');
+            } else {
+                elements[i].classList.remove('hidden');
+            }
+        }
+        // Disable offline specific elements
+        elements = document.getElementsByClassName("offline-disable");
+        for (i = 0; i < elements.length; i++){
+            if(app.online){
+                elements[i].classList.remove('disabled');
+            } else {
+                elements[i].classList.add('disabled');
+            }
+        }
+        return app.online;
+    },
+
     // Check for last update check
     checkForLastUpdateCheck: function(resolve, reject){
         // Checklast Update
@@ -218,16 +290,25 @@ var app = {
 
     checkForUpdate: function(resolve, reject) {
         app.utils.setLoadingMsg("Vérification des mises à jour");
+        app.checkConnection();
 
         var manifestReady = false;
         var assetsReady = false;
         var updateAvailable = false;
         var updateError = false;
 
+        if(!app.online){
+            app.utils.setLoadingMsg("L'application est hors-ligne");
+            if(typeof resolve === 'function'){
+                resolve(false);
+            }
+            return;
+        }
+
         var onGetMtime = function(key, mtime, ready){
             var old_mtime = localStorage.getItem("momo-"+key+"-mtime");
             if (mtime) {
-                if(mtime !== old_mtime) {
+                if(mtime != old_mtime) {
                     updateAvailable = true;
                 }
             } else {
@@ -239,6 +320,9 @@ var app = {
                     app.flash("Impossible de détecter des nouvelles mises à jour", 'danger');
                     if(typeof reject === 'function'){
                         reject();
+                    }
+                    if(typeof resolve === 'function'){
+                        resolve(false);
                     }
                 } else {
                     if(updateAvailable){
@@ -888,6 +972,9 @@ var app = {
         // Render page (with small hack, so it doesn't mess up the display)
         $inpage.innerHTML = app.renderPage(page_obj, force);
 
+        // Check for connection
+        app.checkConnection();
+
         // Pull to update binder
         app.bindPagePull($inpage);
 
@@ -1119,7 +1206,11 @@ var app = {
         }
 
         if(app.currentPage !== page){
-            app.navigate(page, back);
+            if(!app.pages[page].external || app.pages[page].external && app.online){
+                app.navigate(page, back);
+            } else {
+                window.history.go(-1);
+            }
         }
         app.parentPage = page;
         app.previousPage = page;
