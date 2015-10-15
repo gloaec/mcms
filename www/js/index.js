@@ -326,7 +326,13 @@ var app = {
         var updateError = false;
 
         if(!app.online){
-            app.utils.setLoadingMsg("L'application est hors-ligne");
+            var msg = "Impossible de détecter une mise à jour car votre appareil n'est pas connecté à Internet. ";
+            var updatedAt = localStorage.getItem('momo-updated-at');
+            if(updatedAt){
+               msg += "Pour information, la dernière mise à jour date du " + app.utils.formatDate(new Date(updatedAt)) + ".";
+            }
+            app.utils.setLoadingMsg("Application hors-ligne");
+            app.flash(msg, 'danger');
             if(typeof resolve === 'function'){
                 resolve(false);
             }
@@ -1366,6 +1372,7 @@ var app = {
             function(){
                 localStorage.setItem('momo-manifest-mtime', app.manifestMtime);
                 localStorage.setItem('momo-assets-mtime', app.assetsMtime);
+                localStorage.setItem('momo-updated-at', new Date());
                 loadAssets(resolve, reject);
             },
             function(){
