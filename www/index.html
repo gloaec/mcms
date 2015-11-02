@@ -67,9 +67,7 @@
         <script type="text/x-tmpl" id="momo-default-footer-tmpl">
           <div class="col-xs-6 navbar-btn text-left">
               <a href="https://dev.entrouvert.org/projects/momo/"
-                  class="btn btn-success pull-left momo-repo"
-                  target="_system"
-                  onclick="javascript:app.utils.onExternalLinkClick()">Momo repository</a>
+                  class="btn btn-success pull-left momo-repo" target="_system">Momo repository</a>
           </div>
           <div class="col-xs-6 navbar-btn text-right">
               <a href="mailto:{%= o.meta.contact %}"
@@ -178,7 +176,7 @@
         </script>
 
         <script type="text/x-tmpl" id="momo-list-item-tmpl">
-            <a href="#{%= o.id %}" class="{% if(!o.header){ %} list-group-item {% } %} clearfix {%= o.external ? 'offline-disable' : '' %}">
+          <a href="{% if(!o.external) { %}#{%= o.id %}{% } else { %}{%= o.url %}{% } %}" class="{% if(!o.header){ %} list-group-item {% } %} clearfix" target="_system">
                 {% if(o.header){ %}
                     <span class="pull-left">
                         {% if(o.icon){ %}
@@ -224,8 +222,8 @@
         </script>
 
         <script type="text/x-tmpl" id="momo-icon-item-tmpl">
-            <div class="col-xs-{%= o.colxs %} col-sm-{%= o.colsm %} col-md-{%= o.colmd %} col-lg-{%= o.collg %}">
-                <a href="#{%= o.id %}" class="btn btn-block text-center {%= o.className || 'btn-default' %} {%= o.external ? 'offline-disable' : '' %}">
+          <div class="col-xs-{%= o.colxs %} col-sm-{%= o.colsm %} col-md-{%= o.colmd %} col-lg-{%= o.collg %}">
+            <a href="{% if(!o.external) { %}#{%= o.id %}{% } else { %}{%= o.url %}{% } %}" class="btn btn-block text-center {%= o.className || 'btn-default' %}" target="_system">
                     {% if(o.external){ %}
                         <i class="fa fa-external-link top-right"></i>
                     {% } %}

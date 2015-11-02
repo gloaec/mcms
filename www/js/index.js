@@ -1445,15 +1445,6 @@ var app = {
             }
         },
 
-        onExternalLinkClick: function(e){
-            e = e || window.event;
-            var targ = e.target || e.srcElement;
-            if (targ.nodeType === 3){ targ = targ.parentNode; }
-            var url = targ.getAttribute("href");
-            app.utils.openExternalURL(url);
-            return false;
-        },
-
         openExternalURL: function(url){
             window.replaceHash(app.parentPage);
             if(navigator.app){ // Android
