@@ -212,12 +212,12 @@ var app = {
                 case Connection.WIFI:
                 case Connection.CELL_4G:
                 case Connection.CELL_3G:
-                case Connection.CELL_2G:
                     app.online = true;
                     if(typeof resolve === "function"){
                         resolve();  
                     }
                     break;
+                case Connection.CELL_2G:
                 case Connection.NONE:
                 case Connection.UNKNOWN:
                 default:
