@@ -26,6 +26,7 @@ Install cordovas plugins:
     phonegap plugin add cordova-plugin-file-transfer
     phonegap plugin add cordova-plugin-zip
     phonegap plugin add cordova-plugin-whitelist
+    phonegap plugin add cordova-plugin-statusbar
     phonegap plugin add cordova-plugin-inappbrowser # optional
 
 If plugin registry server seems to be down :'( use git instead ;)
@@ -34,6 +35,7 @@ If plugin registry server seems to be down :'( use git instead ;)
     phonegap plugin add https://github.com/apache/cordova-plugin-file-transfer.git
     phonegap plugin add https://github.com/MobileChromeApps/cordova-plugin-zip.git
     phonegap plugin add https://github.com/apache/cordova-plugin-whitelist.git
+    phonegap plugin add https://github.com/apache/cordova-plugin-statusbar.git
     phonegap plugin add https://github.com/apache/cordova-plugin-inappbrowser.git # optional
 
 ## Assets Management
