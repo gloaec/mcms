@@ -182,22 +182,7 @@ var app = {
         // Register rootPath
         if(typeof FileTransfer !== 'undefined' && typeof zip !== 'undefined' && typeof window.requestFileSystem === 'function'){
             if(DEBUG){ console.log('FileSystem access'); }
-
-            try {
-                window.requestFileSystem(LocalFileSystem.TEMPORARY, 0,
-                    function(fileSystem){
-                        app.rootPath = fileSystem.root.toURL();
-                    }, 
-                    function(err){
-                        if(DEBUG){ console.log('FileSystem unreachable'); }
-                        app.flash("Impossible d'écrire sur le périphérique", 'danger');
-                        app.rootPath = DEBUG_WWW_URL;
-                    }
-                );
-            } catch(e) {
-                if(DEBUG){ console.log('FileSystem error'+e.message); }
-                app.rootPath = DEBUG_WWW_URL;
-            }
+            app.rootPath = cordova.file.dataDirectory;
         } else {
             if(DEBUG){ console.log('FileSystem unavaible'); }
             app.rootPath = DEBUG_WWW_URL;
@@ -506,7 +491,7 @@ var app = {
 
             var onFileSystemGet = function(fileSystem){
                 // Get fileSystem's relative cache folder
-                var rootPath = app.rootPath = fileSystem.root.toURL();
+                var rootPath = app.rootPath = cordova.file.dataDirectory;
 
                 // Callback
                 cb(patch(response, rootPath));
@@ -536,7 +521,7 @@ var app = {
 
         var onFileSystemGet = function(fileSystem){
 
-            var rootPath = app.rootPath = fileSystem.root.toURL();
+            var rootPath = app.rootPath = cordova.file.dataDirectory;
             var fileTransfer = new FileTransfer();
             var uri = encodeURI(app.manifest.meta.assetsUrl);
             var filePath = fileSystem.root.toURL() + uri.substr(uri.lastIndexOf("/") + 1);
