@@ -34,6 +34,7 @@
     <preference name="StatusBarOverlaysWebView" value="false" />
     <preference name="StatusBarBackgroundColor" value="#000000" />
     <preference name="StatusBarStyle" value="blackopaque" />
+    <preference name="AndroidPersistentFileLocation" value="Compatibility" />
     <feature name="http://api.phonegap.com/1.0/file" />
     <!--gap:plugin name="org.apache.cordova.file" version="3.0.0" />
     <gap:plugin name="org.apache.cordova.file-transfer" version="1.4.0" />

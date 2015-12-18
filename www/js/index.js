@@ -29,6 +29,7 @@ var ANIMATION_BACK_OUT_CLASS  = 'pt-page-moveToRightEasing pt-page-ontop';
 var ANIMATION_BACK_IN_CLASS = 'pt-page-moveFromLeft';
 var ON_PULL = 'checkForUpdate'; // || 'update'
 var CHECK_FOR_CONNECTION_INTERVAL = 3000;
+var AJAX_TIMEOUT = 5000;
 
 // Application
 var app = {
@@ -120,12 +121,9 @@ var app = {
     // Device ready callback
     onDeviceReady: function() {
         var request = new XMLHttpRequest();
-        request.open('GET', '../index.json');
+        request.open('GET', './index.json');
         request.onload = function() {
-            if (request.status != 200) {
-                /* this should never happen */
-                app.utils.setLoadingMsg("Initialisation de l'application : erreur de chargement");
-            } else {
+            if (request.status >= 200 && request.status < 400 || request.status === 0 /* iOS OhMyBuddha!! */) {
                 var new_manifest = JSON.parse(this.responseText);
                 for (var attr in new_manifest.meta) {
                     if (new_manifest.meta.hasOwnProperty(attr)) {
@@ -137,7 +135,14 @@ var app = {
                 app.manifest.pages = new_manifest.pages;
                 app.manifest.footer = new_manifest.footer;
                 app.onDefaultManifestLoaded();
+            } else {
+                /* this should never happen */
+                app.utils.setLoadingMsg("Initialisation de l'application : Erreur de chargement");
             }
+        };
+        request.timeout = AJAX_TIMEOUT;
+        request.ontimeout = function(){
+            app.utils.setLoadingMsg("Initialisation de l'application : Temps imparti dépassé");
         };
         request.send();
     },
@@ -253,6 +258,7 @@ var app = {
                 }
             }
         }
+        app.online = true;
         // Hide offline specific elements
         var i, elements;
         elements = document.getElementsByClassName("offline-hidden");
@@ -325,6 +331,8 @@ var app = {
         }
 
         var onGetMtime = function(key, mtime, ready){
+            var l = key + ' ' + mtime + ' ' + ready;
+            console.log(l);
             var old_mtime = localStorage.getItem("momo-"+key+"-mtime");
             if (mtime) {
                 if(mtime != old_mtime) {
@@ -336,10 +344,7 @@ var app = {
             if(ready){
                 if(updateError){
                     if(DEBUG){ console.error('Error checking for updates'); }
-                    app.flash("Impossible de détecter des nouvelles mises à jour", 'danger');
-                    if(typeof reject === 'function'){
-                        reject();
-                    }
+                    app.flash("Impossible de détecter des nouvelles mises à jour. Veuillez vérifier votre connexion internet.", 'danger');
                     if(typeof resolve === 'function'){
                         resolve(false);
                     }
@@ -401,6 +406,7 @@ var app = {
         var url          = app.manifest.meta.manifestUrl;
         var request      = new XMLHttpRequest();
 
+        // Force reload with timestamp injected in URL
         request.open('GET', app.utils.addParameter(url, 'timestamp', (+new Date()), true), true);
 
         // AJAX Callback
@@ -455,6 +461,17 @@ var app = {
 
         // Handle AJAX Error
         request.onerror = function() {
+            if(typeof reject === "function"){
+                reject();
+            }
+            app.onAjaxError(url);
+        };
+
+        // Set AJAX Timeout
+        request.timeout = AJAX_TIMEOUT;
+
+        // Handle AJAX Timeout
+        request.ontimeout = function() {
             if(typeof reject === "function"){
                 reject();
             }
@@ -1592,23 +1609,29 @@ var app = {
                 if (xhr.status >= 200 && xhr.status < 400 || xhr.status === 0 /* iOS OhMyBuddha!! */) {
                     var mtime = new Date(xhr.getResponseHeader('Last-Modified'));
                     if (mtime.toString() === 'Invalid Date') {
-                      //app.onAjaxError(url);
                       callback(); // dont want to return a bad date
                     } else {
                       callback(mtime);
                     }
                 // AJAX error
                 } else {
-                  //app.onAjaxError(url);
                   callback(); // dont want to return a bad date
                 }
             };
 
             // Handle AJAX Error
-            //xhr.onerror = function() {
-            //  //app.onAjaxError(url);
-            //  callback();
-            //};
+            xhr.onerror = function() {
+              //app.onAjaxError(url);
+              callback();
+            };
+
+            // Set AJAX Timeout
+            xhr.timeout = AJAX_TIMEOUT;
+
+            // Handle AJAX Timout
+            xhr.ontimeout = function(){
+                callback(); // dont want to return a bad date
+            }
             xhr.send();
         },
 
