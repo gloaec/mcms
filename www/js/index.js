@@ -258,7 +258,6 @@ var app = {
                 }
             }
         }
-        app.online = true;
         // Hide offline specific elements
         var i, elements;
         elements = document.getElementsByClassName("offline-hidden");
@@ -331,8 +330,6 @@ var app = {
         }
 
         var onGetMtime = function(key, mtime, ready){
-            var l = key + ' ' + mtime + ' ' + ready;
-            console.log(l);
             var old_mtime = localStorage.getItem("momo-"+key+"-mtime");
             if (mtime) {
                 if(mtime != old_mtime) {
