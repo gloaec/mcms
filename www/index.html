@@ -91,7 +91,7 @@
             <div class="parent-navbar-brand">
                 <div class="navbar-btn">
                     {% if(o.id && o.id != 'home'){ %}
-                        <a href="#" class="btn btn-default pull-left momo-back-btn" onclick="window.history.back(); return false;">
+                        <a href="#{%= o.parent.id %}" class="btn btn-default pull-left momo-back-btn">
                             <span class="sr-only"> History back </span>
                             <i class="fa fa-chevron-left"></i>
                         </a>
