@@ -986,13 +986,8 @@ var app = {
     // Navigate to page
     navigate: function(page, back, cb, force){
         var page_obj = app.pages[page];
-
         if(page_obj.external && back){
             window.history.back();
-            return false;
-        } else
-        if(page_obj.external){
-            app.utils.openExternalURL(page_obj.url, page_obj.inAppBrowser);
             return false;
         }
 
@@ -1247,11 +1242,10 @@ var app = {
         }
 
         if(app.currentPage !== page){
-            if(!app.pages[page].external || app.pages[page].external && app.online){
-                app.navigate(page, back);
-            } else {
-                window.history.go(-1);
+            if(app.pages[page].external && app.online) {
+                return app.utils.openExternalURL(app.pages[page].url);
             }
+            app.navigate(page, back);
         }
         app.parentPage = page;
         app.previousPage = page;
@@ -1461,16 +1455,11 @@ var app = {
             return false;
         },
 
-        openExternalURL: function(url, inAppBrowser){
-            //if(inAppBrowser){
-            //    cordova.InAppBrowser.open(url);
-            //} else {
-                if(navigator.app){ // Android
-                    navigator.app.loadUrl(encodeURI(url), { openExternal:true });
-                } else { // iOS and others
-                    window.open(encodeURI(url), "_system", 'location=yes'); // opens in the app, not in safari
-                }
-            //}
+        openExternalURL: function(url){
+            window.replaceHash(app.parentPage);
+            if(navigator.app){ // Android
+                navigator.app.loadUrl(encodeURI(url), { openExternal:true });
+            }
             return false;
         },
 
