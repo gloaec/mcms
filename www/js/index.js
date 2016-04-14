@@ -1360,7 +1360,6 @@ var app = {
                 }
             );
         };
-
         app.loadManifest(
             function(){
                 localStorage.setItem('momo-manifest-mtime', app.manifestMtime);
@@ -1368,8 +1367,8 @@ var app = {
                 localStorage.setItem('momo-updated-at', new Date());
                 loadAssets(resolve, reject);
             },
-            function(){
-                loadAssets(resolve, reject);
+            function() {
+                app.flash("Mise à jour impossible. Veuillez vous assurer que vous êtes connectés", 'danger');
             }
         );
     },
