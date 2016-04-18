@@ -484,7 +484,7 @@ var app = {
         if(DEBUG){ console.log("Cannot load "+url+" [Error "+(request ? request.status : 'Unknown')+"]. Loading local manifest instead."); }
 
         // Store proper manifest
-        localStorage.setItem("momo-manifest", JSON.stringify(app.safeManifest));
+        localStorage.setItem("momo-manifest", app.safeManifest);
 
         // Restore safe manifest 
         app.manifest = app.safeManifest;
